@@ -1,0 +1,146 @@
+---
+title: "Simple Savanna"
+author: "Daniel S. Godwin"
+output:
+  html_document:
+    keep_md: true
+    theme: journal
+    fig_caption: true
+    fig.path: 'figure_rmd/'
+---
+```{r echo=FALSE}
+library(stargazer)
+```
+
+```{r sourceMFRI, echo = TRUE, cache=TRUE}
+source("Scripts/MFRI_MAP.R")
+```
+
+# Model Mean Fire Return Interval as a function of Mean Annual Rainfall
+
+# Figures
+
+### MFRI vs. MAP
+
+```{r fig_MFRI_MAP, echo=FALSE}
+modelCompare_binom <- ggplot(data = MAP_FF_modelCompare, aes(x = MAP_mm, y = MFRI))+
+  geom_jitter(alpha = .55, color = "gray90")+
+  geom_line(color = "black", aes(x = MAP_mm, y = MAP_FF_modelCompare$predicted))+
+  geom_line(color = "gray50", aes(x = MAP_mm, y = MAP_FF_modelCompare$usd))+
+  geom_line(color = "gray50", aes(x = MAP_mm, y = MAP_FF_modelCompare$lsd))+
+  ylab("Mean Fire Return Interval (Yr)")+
+  xlab("Mean Annual Precipitation (mm)")+
+  cleanTheme
+modelCompare_binom
+```
+
+### FF vs. MAP
+
+```{r fig_FF_MAP, echo=FALSE}
+modelCompare_binom <- ggplot(data = MAP_FF_modelCompare, aes(x = MAP_mm, y = 1/MFRI))+
+  geom_jitter(alpha = .50, color = "gray90")+
+  ylim(0,1)+
+  geom_line(color = "black", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$predicted))+
+  geom_line(color = "gray50", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$usd))+
+  geom_line(color = "gray50", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$lsd))+
+  # geom_smooth(method = "glm", family="Gamma", formula = y ~ x, fill = "gray85", size = 2)+
+  ylab("Fire Frequency (Fires / Yr)")+
+  xlab("Mean Annual Precipitation (mm)")+
+  cleanTheme
+modelCompare_binom
+```
+
+## Model Comparison
+
+```{r modelCompare_Plot, echo=FALSE}
+modelCompare_plot <- ggplot(data = MAP_FF_modelCompare, aes(x = MFRI, y = predicted))+
+  geom_point(alpha = .01)+
+  coord_fixed()+
+  ylab("Predicted")+
+  xlab("Real")+
+  cleanTheme
+modelCompare_plot
+```
+
+```{r modelCompare, echo=FALSE,results='asis'}
+stargazer(lm(FF ~ predicted, data = MAP_FF_modelCompare),type = "html")
+```
+
+# Model Fuel Load and Intensity as a function of MFRI and MAP
+
+```{r sourceIntensity_MAP, echo=TRUE}
+source("Scripts/Intensity_MAP.R")
+```
+
+```{r}
+FI_estimates <- MFRI_expand 
+
+# sampleMFRI function() # Need to figure out a way to sample
+
+FI_estimates$FL <- Govender2006_fuelLoad(TimeSinceFire = MFRI_expand$MFRI_estimates,
+                                         previousTwoYearRain_mm = MFRI_expand$MAP)
+
+FuelMoisture <- seq(from = 10, to = 300, by = 10)
+RelativeHumidity <- seq(from = 5, to = 100, by = 1)
+WindSpeed <- seq(from = 0, to = 15, by = .5)
+
+FI_estimates$FuelMoisture <- sample(x = FuelMoisture, size = nrow(FI_estimates), replace = TRUE)
+FI_estimates$RelativeHumidity <- sample(x = RelativeHumidity, size = nrow(FI_estimates), replace = TRUE)
+FI_estimates$WindSpeed <- sample(x = WindSpeed, size = nrow(FI_estimates), replace = TRUE)
+
+FI_estimates$FI <- Trollope2002_firelineIntensity(FuelLoad = FI_estimates$FL, FuelMoisture = FI_estimates$FuelMoisture, RelativeHumidity = FI_estimates$RelativeHumidity, WindSpeed = FI_estimates$WindSpeed)
+
+FI_estimates$ProbTop <- inv.logit(-3.9 * log(2) + .05 * sqrt(FI_estimates$FI) + .3 * 1)
+
+FI_estimates$P_Escape <- 1 - FI_estimates$ProbTop
+```
+
+## Figures
+
+### Fuel load vs. MAP
+
+```{r fig_FuelLoad, echo=FALSE}
+fig_FuelLoad <- ggplot(data = FI_estimates, aes(x = MAP, y = FL))+
+  geom_point(alpha = .01)+
+  ylab("Fuel Load (kg/ha)")+
+  xlab("Mean Annual Precipitation (mm/yr)")+
+  cleanTheme
+fig_FuelLoad
+```
+
+### Fire Intensity vs. MAP
+
+```{r fig_FireIntensity, echo=FALSE}
+fig_FireIntensity <- ggplot(data = FI_estimates, aes(x = MAP, y = FI))+
+  geom_point(alpha = .5)+
+  ylim(0,5000)+
+  ylab("Fire Intensity")+
+  xlab("Mean Annual Precipitation (mm/yr)")+
+  cleanTheme
+fig_FireIntensity
+```
+
+### p(Topkill) vs. MAP
+
+```{r fig_pTopkill, echo=FALSE}
+fig_pTopkill <- ggplot(data = FI_estimates, aes(x = MAP, y = ProbTop))+
+  geom_point(alpha = .5)+
+  ylim(0,1)+
+  ylab("p(Topkill, 1 m sapling)")+
+  xlab("Mean Annual Precipitation (mm/yr)")+
+  cleanTheme
+fig_pTopkill
+```
+
+### p(Escape) vs. MAP
+
+```{r fig_pEscape, echo=FALSE}
+fig_pEscape <- ggplot(data = FI_estimates, aes(x = MAP, y = P_Escape))+
+  geom_point(alpha = .5)+
+  ylim(0,1)+
+  ylab("p(Escape, 1 m sapling)")+
+  xlab("Mean Annual Precipitation (mm/yr)")+
+  geom_smooth(method = "glm", family = "binomial")+
+  cleanTheme
+fig_pEscape
+```

@@ -40,6 +40,7 @@ library(ggthemes)
 library(reshape2)
 library(broom)
 library(bbmle)
+library(plyr)
 
 cleanTheme <- ggthemes::theme_tufte() +
   ggplot2::theme(
@@ -94,6 +95,8 @@ MFRI_MAP_binomial
 glm_MFRI_null <- glm(data = krugerMAP_FRI_df, formula = MFRI ~ 1, family = Gamma(link = log))
 glm_MFRI_MAP <- glm(data = krugerMAP_FRI_df, formula = MFRI ~ MAP_mm, family = Gamma(link = log))
 
+# Model distribution of MFRI ----
+
 mfridist_mean <- mean(krugerMAP_FRI_df$MFRI)
 mfridist_var <- var(krugerMAP_FRI_df$MFRI)
 mfridist_shape_est <- mfridist_mean^2 / mfridist_var
@@ -119,10 +122,6 @@ gammaDistDF <- data.frame(var = rgamma(n = length(krugerMAP_FRI_df),
                                        scale = mfridist_scale))
 
 
-
-
-
-
 MFRI_density <- ggplot(data = krugerMAP_FRI_df, aes(x = MFRI))+
   geom_density(fill = "blue", alpha = ".5")+
   xlab("MFRI")+
@@ -130,55 +129,46 @@ MFRI_density <- ggplot(data = krugerMAP_FRI_df, aes(x = MFRI))+
   cleanTheme
 MFRI_density
 
-
+# Predict relationship of MFRI ~ MAP ----
 
 MAP_FF_modelCompare <- krugerMAP_FRI_df
 
 MAP_FF_modelCompare$predicted <- exp(predict(object = glm_MFRI_MAP, newdata = MAP_FF_modelCompare))
 
-MAP_FF_predicted <- predict.glm(glm_MFRI_MAP, newdata = modelCompare, se.fit=TRUE, type="link", interval="prediction")
+MAP_FF_predicted <- predict.glm(glm_MFRI_MAP, newdata = MAP_FF_modelCompare, se.fit=TRUE, type="link", interval="prediction")
 
 MAP_FF_predicted <- tidy(MAP_FF_predicted)
 MAP_FF_predicted <- exp(MAP_FF_predicted)
 
-MAP_FF_predicted$upper <- qgamma(p = c(0.05,.95), shape = FF_shape,scale = FF_scale)[2]
-MAP_FF_predicted$lower <- qgamma(p = c(0.05,.95), shape = FF_shape,scale = FF_scale)[1]
+upper <- qgamma(p = .95, shape = mfridist_shape,scale = mfridist_scale)
+lower <- qgamma(p = .05, shape = mfridist_shape,scale = mfridist_scale)
 
 MAP_FF_modelCompare$usd <- MAP_FF_predicted$fit + upper * MAP_FF_predicted$se.fit
 MAP_FF_modelCompare$lsd <- MAP_FF_predicted$fit - lower * MAP_FF_predicted$se.fit
 
+# Make sampling function -----
 
-modelCompare_melt <- melt(MAP_FF_modelCompare,measure.vars = c("predicted","MFRI"))
-names(modelCompare_melt) <- c("MAP_mm","Model","Value")
+MFRI_from_MAP <- function(MAP = numeric(0)){
+  if(!is.numeric(MAP))stop("MAP must be numeric!")
+  if(MAP < 400 || MAP > 950)stop("MAP must be constrained between 400 and 950!")
+  
+  predicted <- predict.glm(glm_MFRI_MAP, newdata = list(MAP_mm = MAP), se.fit=TRUE, type="link", interval="prediction")
+  
+  upper <- qgamma(p = .95, shape = mfridist_shape,scale = mfridist_shape)
+  lower <- qgamma(p = .05, shape = mfridist_shape,scale = mfridist_shape)
+  
+  
+  usd <- predicted$fit + upper * predicted$se.fit
+  lsd <- predicted$fit - lower * predicted$se.fit
+  
+  results <- list(MAP = MAP, predicted = predicted$fit, usd = usd, lsd = lsd)
+  
+  return(results)
+}
 
-modelCompare_binom <- ggplot(data = MAP_FF_modelCompare, aes(x = MAP_mm, y = MFRI))+
-  geom_jitter(alpha = .15, color = "gray70")+
-  geom_line(color = "red", aes(x = MAP_mm, y = MAP_FF_modelCompare$predicted))+
-  geom_line(linetype = "dotted", aes(x = MAP_mm, y = MAP_FF_modelCompare$usd))+
-  geom_line(linetype = "dotted", aes(x = MAP_mm, y = MAP_FF_modelCompare$lsd))+
- # geom_smooth(method = "glm", family="Gamma", formula = y ~ x, fill = "gray85", size = 2)+
-  ylab("Fire Frequency")+
-  xlab("Mean Annual Precipitation (mm)")+
-  cleanTheme
-modelCompare_binom
+# Make df of potential values ---- 
 
-modelCompare_binom <- ggplot(data = MAP_FF_modelCompare, aes(x = MAP_mm, y = 1/MFRI))+
-  geom_jitter(alpha = .15, color = "gray70")+
-  geom_line(color = "red", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$predicted))+
-  geom_line(linetype = "dotted", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$usd))+
-  geom_line(linetype = "dotted", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$lsd))+
-  # geom_smooth(method = "glm", family="Gamma", formula = y ~ x, fill = "gray85", size = 2)+
-  ylab("Fire Frequency")+
-  xlab("Mean Annual Precipitation (mm)")+
-  cleanTheme
-modelCompare_binom
+MAP_range <- seq(400,950,1)
+MFRI_estimates <- as.data.frame(MFRI_from_MAP(MAP_range))
+MFRI_expand <- ddply(.data = MFRI_estimates, .(MAP), summarize, MFRI_estimates = seq(lsd,usd,by = .01))
 
-modelCompare_plot <- ggplot(data = MAP_FF_modelCompare, aes(x = MFRI, y = predicted))+
-  geom_point(alpha = .01)+
-  coord_fixed()+
-  ylab("Predicted")+
-  xlab("Real")+
-  cleanTheme
-modelCompare_plot
-
-summary(lm(FF ~ predicted, data = MAP_FF_modelCompare))
