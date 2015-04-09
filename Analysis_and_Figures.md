@@ -1,28 +1,29 @@
----
-title: "Simple Savanna"
-author: "Daniel S. Godwin"
-output:
-  html_document:
-    keep_md: true
-    theme: journal
-    fig_caption: true
-    fig.path: 'figure_rmd/'
----
-```{r echo=FALSE}
+# Simple Savanna
+Daniel S. Godwin  
 
-
-library(stargazer)
-library(ggplot2)
-library(plyr)
-library(reshape2)
-library(broom)
-library(knitr)
-
-opts_chunk$set(warnings=FALSE, message=FALSE, comment=NA, fig.width=6, fig.height=6,fig.ext='png')
+```
+## 
+## Please cite as: 
+## 
+##  Hlavac, Marek (2014). stargazer: LaTeX code and ASCII text for well-formatted regression and summary statistics tables.
+##  R package version 5.1. http://CRAN.R-project.org/package=stargazer
 ```
 
-```{r sourceMFRI, echo = TRUE, cache=TRUE}
+```
+## Warning: package 'broom' was built under R version 3.1.2
+```
+
+
+```r
 source("Scripts/MFRI_MAP.R")
+```
+
+```
+OGR data source with driver: ESRI Shapefile 
+Source: "Data/FRI/", layer: "fire return interval_1941to2006"
+with 34856 features and 4 fields
+Feature type: wkbPolygon with 2 dimensions
+Found 34856 region(s) and 35041 polygon(s)
 ```
 
 # Model Mean Fire Return Interval as a function of Mean Annual Rainfall
@@ -31,57 +32,43 @@ source("Scripts/MFRI_MAP.R")
 
 ### MFRI vs. MAP
 
-```{r fig_MFRI_MAP, echo=FALSE, warnings = FALSE, message=FALSE}
-modelCompare_binom <- ggplot(data = MAP_FF_modelCompare, aes(x = MAP_mm, y = MFRI))+
-  geom_jitter(alpha = .55, color = "gray90")+
-  geom_line(color = "black", aes(x = MAP_mm, y = MAP_FF_modelCompare$predicted))+
-  geom_line(color = "gray50", aes(x = MAP_mm, y = MAP_FF_modelCompare$usd))+
-  geom_line(color = "gray50", aes(x = MAP_mm, y = MAP_FF_modelCompare$lsd))+
-  ylab("Mean Fire Return Interval (Yr)")+
-  xlab("Mean Annual Precipitation (mm)")+
-  cleanTheme
-modelCompare_binom
-```
+![plot of chunk fig_MFRI_MAP](Analysis_and_Figures_files/figure-html/fig_MFRI_MAP.png) 
 
 ### FF vs. MAP
 
-```{r fig_FF_MAP, echo=FALSE}
-modelCompare_binom <- ggplot(data = MAP_FF_modelCompare, aes(x = MAP_mm, y = 1/MFRI))+
-  geom_jitter(alpha = .50, color = "gray90")+
-  ylim(0,1)+
-  geom_line(color = "black", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$predicted))+
-  geom_line(color = "gray50", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$usd))+
-  geom_line(color = "gray50", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$lsd))+
-  # geom_smooth(method = "glm", family="Gamma", formula = y ~ x, fill = "gray85", size = 2)+
-  ylab("Fire Frequency (Fires / Yr)")+
-  xlab("Mean Annual Precipitation (mm)")+
-  cleanTheme
-modelCompare_binom
-```
+![plot of chunk fig_FF_MAP](Analysis_and_Figures_files/figure-html/fig_FF_MAP.png) 
 
 ## Model Comparison
 
-```{r modelCompare_Plot, echo=FALSE}
-modelCompare_plot <- ggplot(data = MAP_FF_modelCompare, aes(x = MFRI, y = predicted))+
-  geom_point(alpha = .01)+
-  coord_fixed()+
-  ylab("Predicted")+
-  xlab("Real")+
-  cleanTheme
-modelCompare_plot
-```
+![plot of chunk modelCompare_Plot](Analysis_and_Figures_files/figure-html/modelCompare_Plot.png) 
 
-```{r modelCompare, echo=FALSE,results='asis'}
-stargazer(lm(FF ~ predicted, data = MAP_FF_modelCompare),type = "html")
-```
+
+<table style="text-align:center"><tr><td colspan="2" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"></td><td><em>Dependent variable:</em></td></tr>
+<tr><td></td><td colspan="1" style="border-bottom: 1px solid black"></td></tr>
+<tr><td style="text-align:left"></td><td>FF</td></tr>
+<tr><td colspan="2" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">predicted</td><td>-0.019<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.0003)</td></tr>
+<tr><td style="text-align:left"></td><td></td></tr>
+<tr><td style="text-align:left">Constant</td><td>0.331<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.002)</td></tr>
+<tr><td style="text-align:left"></td><td></td></tr>
+<tr><td colspan="2" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Observations</td><td>24,138</td></tr>
+<tr><td style="text-align:left">R<sup>2</sup></td><td>0.122</td></tr>
+<tr><td style="text-align:left">Adjusted R<sup>2</sup></td><td>0.122</td></tr>
+<tr><td style="text-align:left">Residual Std. Error</td><td>0.071 (df = 24136)</td></tr>
+<tr><td style="text-align:left">F Statistic</td><td>3,363.000<sup>***</sup> (df = 1; 24136)</td></tr>
+<tr><td colspan="2" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td style="text-align:right"><sup>*</sup>p<0.1; <sup>**</sup>p<0.05; <sup>***</sup>p<0.01</td></tr>
+</table>
 
 # Model Fuel Load and Intensity as a function of MFRI and MAP
 
-```{r sourceIntensity_MAP, echo=TRUE}
+
+```r
 source("Scripts/Intensity_MAP.R")
 ```
 
-```{r}
+
+```r
 sampleFillDF <- data.frame(MAP = numeric(0), MFRI_sample = numeric(0), FL = numeric(0), FL = numeric(0), FuelMoisture = numeric(0), RelativeHumidity = numeric(0), WindSpeed = numeric(0), FI = numeric(0), FI = numeric(0), ProbTop = numeric(0), P_Escape = numeric(0))
 
 desiredRuns = 500
@@ -119,44 +106,21 @@ sampleFillDF <- rbind(sampleFillDF,MFRI_sample)
 
 ### Fuel load vs. MAP
 
-```{r fig_FuelLoad, echo=FALSE}
-fig_FuelLoad <- ggplot(data = sampleFillDF, aes(x = MAP, y = FL))+
-  geom_point(alpha = .01)+
-  ylab("Fuel Load (kg/ha)")+
-  xlab("Mean Annual Precipitation (mm/yr)")+
-  cleanTheme
-fig_FuelLoad
-```
+![plot of chunk fig_FuelLoad](Analysis_and_Figures_files/figure-html/fig_FuelLoad.png) 
 
 ### Fire Intensity vs. MAP
 
-```{r fig_FireIntensity, echo=FALSE}
-fig_FireIntensity <- ggplot(data = sampleFillDF, aes(x = MAP, y = FI))+
-  geom_point(alpha = .5)+
-  ylim(0,5000)+
-  ylab("Fire Intensity")+
-  xlab("Mean Annual Precipitation (mm/yr)")+
-  cleanTheme
-fig_FireIntensity
-```
+![plot of chunk fig_FireIntensity](Analysis_and_Figures_files/figure-html/fig_FireIntensity.png) 
 
 ### p(Topkill) vs. MAP
 
-```{r fig_pTopkill, echo=FALSE}
-fig_pTopkill <- ggplot(data = sampleFillDF, aes(x = MAP, y = ProbTop))+
-  geom_point(alpha = .1)+
-  ylim(0,1)+
-  ylab("p(Topkill, 1 m sapling)")+
-  geom_smooth(method = "glm", family = "binomial")+
-  xlab("Mean Annual Precipitation (mm/yr)")+
-  cleanTheme
-fig_pTopkill
-```
+![plot of chunk fig_pTopkill](Analysis_and_Figures_files/figure-html/fig_pTopkill.png) 
 
 # Model growth of stems
 
 
-```{r echo=TRUE}
+
+```r
 source("Scripts/Growth.R")
 
 # Create empty dataframes ----
@@ -209,7 +173,6 @@ Fxn_FireIntensity <- function(MAP = numeric(0)){
         
 
    Tree_vector_height <- treeGrowth(height_previous = Tree_vector_height, MAP = MAP_seed)
-
 
     burnTest <- rbinom(n = 1,
                        size = 1,
@@ -321,58 +284,24 @@ pEscape <- ddply(.data = treeHeightsByMAP_df_long,
 )
 
 pEscape$MAP <- as.numeric(as.character(pEscape$MAP))
-
 ```
 
 # Figures
 
 ## Intensity by MAP
 
-```{r fig_FIMAP, echo=FALSE}
-dummyMAPDF <- data.frame(MAP = seq(400,900,1))
-dummyMAPDF$FI <- Fxn_FireIntensity(MAP = dummyMAPDF$MAP)
-
-fig_FIMAP <- ggplot(data = dummyMAPDF, aes(x = MAP, y = FI))+
-  geom_line()+
-  ylab("Fire Intensity (kW / m^2)")+
-  xlab("Mean Annual Precipitation (mm)")+
-  cleanTheme
-fig_FIMAP
-
-```
+![plot of chunk fig_FIMAP](Analysis_and_Figures_files/figure-html/fig_FIMAP.png) 
 
 ## Growth by MAP
 
-```{r fig_GrowthMAP, echo=FALSE}
-Growth <- predict.lm(object = growthModel, newdata = list(MAP = dummyMAPDF$MAP),se.fit = TRUE)
-Growth <- tidy(Growth)
-Growth <- cbind(Growth,dummyMAPDF)
-
-Growth$upper.sd <- Growth$se.fit * sqrt(Growth$df + 1)
-Growth$lower.sd <- Growth$se.fit * sqrt(Growth$df + 1)
-
-Growth$upper.ci <- Growth$upper.sd * 3.92 
-Growth$lower.ci <- Growth$lower.sd * 3.92
-
-
-fig_GrowthMAP <- ggplot(data = Growth, aes(x = MAP, y = fit))+
-  geom_line()+
-  geom_line(data = Growth, linetype = "dashed", aes(x = MAP, y = fit + upper.ci))+
-  geom_line(data = Growth, linetype = "dashed", aes(x = MAP, y = fit - lower.ci))+
-  ylim(20,75)+
-  xlim(400,1000)+
-  ylab("Growth Rate (cm / yr)")+
-  xlab("Mean Annual Precipitation (mm)")+
-  cleanTheme
-fig_GrowthMAP
-
-```
+![plot of chunk fig_GrowthMAP](Analysis_and_Figures_files/figure-html/fig_GrowthMAP.png) 
 
 
 
 ## Distribution of Heights by MAP
 
-```{r}
+
+```r
 distributionsPlot <- ggplot(data=treeHeightsByMAP_df_long_summary,aes(x=as.numeric(as.character(Height_Cuts)),y = Proportion, fill=as.factor(MAP_Cuts),group=MAP_Cuts))
 distributionsPlot+
   cleanTheme+
@@ -386,7 +315,10 @@ distributionsPlot+
   geom_bar(stat="identity",binwidth=1, position="dodge")
 ```
 
-```{r}
+![plot of chunk unnamed-chunk-4](Analysis_and_Figures_files/figure-html/unnamed-chunk-4.png) 
+
+
+```r
 glm_pEscape_null <- glm(data = na.omit(pEscape), pResult ~ 1, family = "binomial")
 glm_pEscape_MAP <- glm(data = na.omit(pEscape), pResult ~ MAP_Cuts, family = "binomial")
 
@@ -403,17 +335,4 @@ pEscape_pred$fit <- inv.logit(pEscape_pred$fit)
 
 ## Probability of Escape by MAP
 
-```{r fig_pEscape, echo=FALSE}
-
-
-fig_pEscape <- ggplot(data = pEscape, aes(x = MAP_Cuts, y = pResult))+
-  geom_point(alpha = .5)+
-  ylim(0,1)+
-  geom_line(data = pEscape_pred, aes(x = MAP, y = fit))+
-  geom_line(linetype = "dashed", data = pEscape_pred, aes(x = MAP, y = upper.ci))+
-  geom_line(linetype = "dashed", data = pEscape_pred, aes(x = MAP, y = lower.ci))+
-  ylab("p(Escape, 1 m sapling)")+
-  xlab("Mean Annual Precipitation (mm/yr)")+
-  cleanTheme
-fig_pEscape
-```
+![plot of chunk fig_pEscape](Analysis_and_Figures_files/figure-html/fig_pEscape.png) 
