@@ -47,6 +47,58 @@ Trollope2002_firelineIntensity <- function(FuelLoad = numeric(0), FuelMoisture =
   return(FI)
 }
 
+Fxn_FireIntensity_Original <- function(MAP = numeric(0)){
+  FI <- 4.13 * MAP - 558.22 # Relationship between MAP and mean fire intensity, Govender et al. 2006
+  return(FI)
+}
+
+# Historical EBP model ----
+
+historicalEBP <- read.csv("Data/HistoricalEBP.csv")
+
+names(historicalEBP) <- c("ID","Date","FireYear","Location","Landscape","Soil","Rainfall_mm","Season","Replicate","Frequency","PlotNumber","FMC","FuelLoad_kgha","AirTemp","RH","Wind_ms","Plot_ROS","Media_FuelLoad_kgm2","Heat_Yield","PlotFI","PercentPlotBurnt","TypeOfBurn","SuccessOfFire")
+
+# Clean EBP data ----
+
+historicalEBP <- subset(historicalEBP,RH >= 0)
+historicalEBP <- subset(historicalEBP,FMC >= 0)
+historicalEBP <- subset(historicalEBP,PlotFI > 0)
+historicalEBP <- subset(historicalEBP,Wind_ms >= 0 & Wind_ms <= 20)
 
 
+EBP_Intensity_by_Flat <- glm(PlotFI ~ 1, data = historicalEBP, family = Gamma(link = identity))
+EBP_Intensity_by_MAP <- glm(PlotFI ~ Rainfall_mm, data = historicalEBP, family = Gamma(link = identity))
+
+
+
+Fxn_FireIntensity_RedoneHistoricalEBP <- function(MAP = numeric(0), Flat = FALSE){
+  
+  if(Flat == FALSE){
+  predFI <- predict.glm(object = EBP_Intensity_by_MAP, type = "link", newdata = list(Rainfall_mm = MAP))
+  
+  
+  mean <- predFI
+  var <- summary(EBP_Intensity_by_MAP)$dispersion * mean^2
+  shape_est <- mean^2 / var
+  scale_est <- var / mean 
+  
+  dist <- rgamma(n = 1000,shape = shape_est,scale = scale_est)
+  
+  FI <- sample(x = dist,size = length(MAP),replace = TRUE)
+  }
+  
+  if(Flat == TRUE){
+  predFI <- predict.glm(object = EBP_Intensity_by_Flat, type = "link")
+
+  mean <- predFI
+  var <- summary(EBP_Intensity_by_Flat)$dispersion * mean^2
+  shape_est <- mean^2 / var
+  scale_est <- var / mean 
+  
+  dist <- rgamma(n = 1000,shape = shape_est,scale = scale_est)
+  
+  FI <- sample(x = dist,size = length(MAP),replace = TRUE)
+  }
+  return(FI)
+}
 

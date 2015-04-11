@@ -71,8 +71,10 @@ modelCompare_plot <- ggplot(data = MAP_FF_modelCompare, aes(x = MFRI, y = predic
 modelCompare_plot
 ```
 
+### lm MFRI ~ Predicted 
+
 ```{r modelCompare, echo=FALSE,results='asis'}
-stargazer(lm(FF ~ predicted, data = MAP_FF_modelCompare),type = "html")
+stargazer(lm(MFRI ~ predicted, data = MAP_FF_modelCompare),type = "html")
 ```
 
 # Model Fuel Load and Intensity as a function of MFRI and MAP
@@ -81,77 +83,7 @@ stargazer(lm(FF ~ predicted, data = MAP_FF_modelCompare),type = "html")
 source("Scripts/Intensity_MAP.R")
 ```
 
-```{r}
-sampleFillDF <- data.frame(MAP = numeric(0), MFRI_sample = numeric(0), FL = numeric(0), FL = numeric(0), FuelMoisture = numeric(0), RelativeHumidity = numeric(0), WindSpeed = numeric(0), FI = numeric(0), FI = numeric(0), ProbTop = numeric(0), P_Escape = numeric(0))
-
-desiredRuns = 500
-
-for(i in 1:desiredRuns)
-  {
-
-FI_estimates <- MFRI_expand 
-
-MFRI_sample <- ddply(FI_estimates,.(MAP),summarize,MFRI_sample = sample(x = MFRI_estimates, size = 1))
-
-MFRI_sample$FL <- Govender2006_fuelLoad(TimeSinceFire = MFRI_sample$MFRI_sample,
-                                         previousTwoYearRain_mm = MFRI_sample$MAP)
-
-FuelMoisture <- seq(from = 10, to = 300, by = 10)
-RelativeHumidity <- seq(from = 5, to = 100, by = 1)
-WindSpeed <- seq(from = 0, to = 15, by = .5)
-
-MFRI_sample$FuelMoisture <- sample(x = FuelMoisture, size = nrow(MFRI_sample), replace = TRUE)
-MFRI_sample$RelativeHumidity <- sample(x = RelativeHumidity, size = nrow(MFRI_sample), replace = TRUE)
-MFRI_sample$WindSpeed <- sample(x = WindSpeed, size = nrow(MFRI_sample), replace = TRUE)
-
-MFRI_sample$FI <- Trollope2002_firelineIntensity(FuelLoad = MFRI_sample$FL, FuelMoisture = MFRI_sample$FuelMoisture, RelativeHumidity = MFRI_sample$RelativeHumidity, WindSpeed = MFRI_sample$WindSpeed)
-
-MFRI_sample$ProbTop <- inv.logit(-3.9 * log(2) + .05 * sqrt(MFRI_sample$FI) + .3 * 1)
-
-MFRI_sample$P_Escape <- 1 - MFRI_sample$ProbTop
-
-sampleFillDF <- rbind(sampleFillDF,MFRI_sample)
-
-}
-```
-
 ## Figures
-
-### Fuel load vs. MAP
-
-```{r fig_FuelLoad, echo=FALSE}
-fig_FuelLoad <- ggplot(data = sampleFillDF, aes(x = MAP, y = FL))+
-  geom_point(alpha = .01)+
-  ylab("Fuel Load (kg/ha)")+
-  xlab("Mean Annual Precipitation (mm/yr)")+
-  cleanTheme
-fig_FuelLoad
-```
-
-### Fire Intensity vs. MAP
-
-```{r fig_FireIntensity, echo=FALSE}
-fig_FireIntensity <- ggplot(data = sampleFillDF, aes(x = MAP, y = FI))+
-  geom_point(alpha = .5)+
-  ylim(0,5000)+
-  ylab("Fire Intensity")+
-  xlab("Mean Annual Precipitation (mm/yr)")+
-  cleanTheme
-fig_FireIntensity
-```
-
-### p(Topkill) vs. MAP
-
-```{r fig_pTopkill, echo=FALSE}
-fig_pTopkill <- ggplot(data = sampleFillDF, aes(x = MAP, y = ProbTop))+
-  geom_point(alpha = .1)+
-  ylim(0,1)+
-  ylab("p(Topkill, 1 m sapling)")+
-  geom_smooth(method = "glm", family = "binomial")+
-  xlab("Mean Annual Precipitation (mm/yr)")+
-  cleanTheme
-fig_pTopkill
-```
 
 # Model growth of stems
 
@@ -168,21 +100,29 @@ source("Scripts/Growth.R")
 
 # Define start conditions ----
 
-  timeLimit <- 100
-  treeNumbers <- 50
-  runs <- 1000
+  timeLimit <- 50
+  treeNumbers <- 100
+  Runs <- 1000
   MAP_previous <- 0
 
-# Functions To Call In Model ----
+  GrowthFlat <- FALSE
+  IntensityFlat <- FALSE
+  FireFrequencyFlat <- FALSE
 
-Fxn_FireIntensity <- function(MAP = numeric(0)){
-  FI <- 4.13*MAP-558.22 # Relationship between MAP and mean fire intensity, Govender et al. 2006
-  return(FI)
-}
+# Write model metadata:
+  simTime <- Sys.time()
+  
+  simMetadata <- data.frame(simTime,
+                            timeLimit,
+                            treeNumbers,
+                            Runs,
+                            GrowthFlat,
+                            IntensityFlat,
+                            FireFrequencyFlat)
 
 # Model ----
 
-  for(u in 1:runs){
+  for(u in 1:Runs){
     
   randomLine <- sample(x = nrow(MFRI_expand),size = 1, replace = FALSE)
   MAP_seed <- MFRI_expand[randomLine,1]
@@ -198,12 +138,10 @@ Fxn_FireIntensity <- function(MAP = numeric(0)){
     }
   }
   
-  if(FireFrequency > 1){FireFrequency = 1}
+  if(FireFrequency > 1) {FireFrequency = 1}
   
   Tree_vector_height <- rep(0,treeNumbers)
   
-  
-  TimeSinceFire <- 0
  
   for(timeSkip in 1:timeLimit){
         
@@ -214,25 +152,18 @@ Fxn_FireIntensity <- function(MAP = numeric(0)){
     burnTest <- rbinom(n = 1,
                        size = 1,
                        prob = FireFrequency) 
-   
-    if(burnTest == 0)
-    {
-      TimeSinceFire <- TimeSinceFire + 1
-    }
-    
+
     if(burnTest == 1)
     {
       
-      FireIntensity <- Fxn_FireIntensity(MAP = MAP_seed) 
+      FireIntensity <- Fxn_FireIntensity_RedoneHistoricalEBP(MAP = MAP_seed,Flat=IntensityFlat) 
       
       
       fireIntensityList <- append(fireIntensityList,FireIntensity)
 
-      Tree_vector_topkills <- rbinom(n=length(Tree_vector_height),size=1,prob=(1 - (inv.logit(-3.9 * log(Tree_vector_height) + .05 * sqrt(FireIntensity) + .3 * 1))))
+      Tree_vector_topkills <- rbinom(n=length(Tree_vector_height),size=1,prob=(1 - (inv.logit(-3.9 * log(Tree_vector_height) + .05 * sqrt(FireIntensity) + .3 * 1)))) # Higgins et al. 2012
       Tree_vector_height <- Tree_vector_height * Tree_vector_topkills
       Tree_vector_height <- sort(Tree_vector_height)
-      
-      TimeSinceFire <- 0
       
       
     }
@@ -260,6 +191,14 @@ treeHeightsByMAP_df_long <- melt(treeHeightsByMAP_df,variable_name = "MAP")
 names(treeHeightsByMAP_df_long) <- c("MAP","Height")
 treeHeightsByMAP_df_long$MAP <- as.numeric(as.character(substring(treeHeightsByMAP_df_long$MAP, 2)))
 
+dataLoc <- file.path(paste(simTime,"_treeHeightsByMAP",".csv",sep = ""))
+metadataLoc <- file.path(paste(simTime,"_metadata",".csv",sep = ""))
+write.csv(x = treeHeightsByMAP_df_long, file=dataLoc)
+write.csv(x = simMetadata, file=metadataLoc)
+
+
+# Clean this up and functionalize it ----
+
 treeHeightsByMAP_df_long$Height_Cuts <- cut(x = treeHeightsByMAP_df_long$Height,
                                             breaks = seq(0,
                                                         ceiling(max(treeHeightsByMAP_df_long$Height)),
@@ -268,10 +207,10 @@ treeHeightsByMAP_df_long$Height_Cuts <- cut(x = treeHeightsByMAP_df_long$Height,
 
 treeHeightsByMAP_df_long$MAP_Cuts <- cut(x = treeHeightsByMAP_df_long$MAP,
                                          right = TRUE,
-                                            breaks = seq(300,
+                                            breaks = seq(400,
                                                          900,
-                                                         20))
-levels(treeHeightsByMAP_df_long$MAP_Cuts) <- seq(300,900,20)
+                                                         50))
+levels(treeHeightsByMAP_df_long$MAP_Cuts) <- seq(400,900,50)
 treeHeightsByMAP_df_long$MAP_Cuts <- as.character(treeHeightsByMAP_df_long$MAP_Cuts)
 treeHeightsByMAP_df_long$MAP_Cuts <- as.numeric(treeHeightsByMAP_df_long$MAP_Cuts)
 
@@ -289,10 +228,10 @@ intensityByMAP_df$MAP <- as.numeric(intensityByMAP_df$MAP)
 
 intensityByMAP_df$MAP_Cuts <- cut(x = intensityByMAP_df$MAP,
                                          right = TRUE,
-                                         breaks = seq(300,
+                                         breaks = seq(400,
                                                       900,
-                                                      20))
-levels(intensityByMAP_df$MAP_Cuts) <- seq(300,900,20)
+                                                      50))
+levels(intensityByMAP_df$MAP_Cuts) <- seq(400,900,50)
 intensityByMAP_df$MAP_Cuts <- as.character(intensityByMAP_df$MAP_Cuts)
 intensityByMAP_df$MAP_Cuts <- as.numeric(intensityByMAP_df$MAP_Cuts)
 
@@ -329,36 +268,71 @@ pEscape$MAP <- as.numeric(as.character(pEscape$MAP))
 ## Intensity by MAP
 
 ```{r fig_FIMAP, echo=FALSE}
-dummyMAPDF <- data.frame(MAP = seq(400,900,1))
-dummyMAPDF$FI <- Fxn_FireIntensity(MAP = dummyMAPDF$MAP)
+FI_recover <- data.frame(MAP = numeric(0),PlotFI=numeric(0))
 
-fig_FIMAP <- ggplot(data = dummyMAPDF, aes(x = MAP, y = FI))+
-  geom_line()+
-  ylab("Fire Intensity (kW / m^2)")+
+FI_recover <- rbind(FI_recover,data.frame(Rainfall_mm = rep.int(x = 496,times = 229),PlotFI=NA))
+FI_recover <- rbind(FI_recover,data.frame(Rainfall_mm = rep.int(x = 544,times = 342),PlotFI=NA))
+FI_recover <- rbind(FI_recover,data.frame(Rainfall_mm = rep.int(x = 550,times = 306),PlotFI=NA))
+FI_recover <- rbind(FI_recover,data.frame(Rainfall_mm = rep.int(x = 737,times = 360),PlotFI=NA))
+FI_recover$PlotFI <- Fxn_FireIntensity_RedoneHistoricalEBP(MAP = FI_recover$Rainfall_mm)
+FI_recover$Type <- "Simulated"
+original <- historicalEBP[c("Rainfall_mm","PlotFI")]
+original$Type <- "Original"
+compareFI <- rbind(FI_recover,original)
+
+MAP_pred <- data.frame(Rainfall_mm = seq(400,900,1))
+EBP_Intensity_by_MAP_pred <- predict.glm(object = EBP_Intensity_by_MAP, type = "link", newdata = MAP_pred,se.fit = TRUE)
+EBP_Intensity_by_MAP_pred <- tidy(EBP_Intensity_by_MAP_pred)
+EBP_Intensity_by_MAP_pred <- cbind(MAP_pred,EBP_Intensity_by_MAP_pred)
+
+EBP_Intensity_by_MAP_pred$upper.ci <- EBP_Intensity_by_MAP_pred$fit+(1.96 * (EBP_Intensity_by_MAP_pred$se.fit))
+EBP_Intensity_by_MAP_pred$lower.ci <- EBP_Intensity_by_MAP_pred$fit-(1.96 * (EBP_Intensity_by_MAP_pred$se.fit))
+EBP_Intensity_by_MAP_pred$fit <- EBP_Intensity_by_MAP_pred$fit
+
+EBP_Intensity_by_MAP_pred$Published <- Fxn_FireIntensity_Original(EBP_Intensity_by_MAP_pred$Rainfall_mm)
+
+fig_EBP_Intensity_by_MAP <- ggplot(data = EBP_Intensity_by_MAP_pred, aes(x = Rainfall_mm, y = fit))+
+  geom_boxplot(data = original, aes(x = Rainfall_mm, y = PlotFI, group = Rainfall_mm),position = "dodge")+
+  geom_line(color = "black")+
+  geom_line(color = "red", aes( x = Rainfall_mm, y = Published))+
+  geom_line(linetype = "dashed", aes(x = Rainfall_mm, y = upper.ci))+
+  geom_line(linetype = "dashed", aes(x = Rainfall_mm, y = EBP_Intensity_by_MAP_pred$lower.ci))+
+  ylab("Intensity (kW / m^2)")+
   xlab("Mean Annual Precipitation (mm)")+
   cleanTheme
-fig_FIMAP
+fig_EBP_Intensity_by_MAP
+
+fig_EBP_density <- ggplot(data = compareFI, aes(x = PlotFI, fill = Type))+
+  geom_density(alpha = .50)+
+ # geom_line(color = "black")+
+#  geom_line(color = "red", aes( x = Rainfall_mm, y = Published))+
+#  geom_line(linetype = "dashed", aes(x = Rainfall_mm, y = EBP_Intensity_by_MAP_pred$upper.ci))+
+ # geom_line(linetype = "dashed", aes(x = Rainfall_mm, y = EBP_Intensity_by_MAP_pred$lower.ci))+
+  #ylab("Intensity (kW / m^2)")+
+ # xlab("Mean Annual Precipitation (mm)")+
+  cleanTheme+
+  facet_wrap(~Rainfall_mm)
+fig_EBP_density
+
+
 
 ```
 
 ## Growth by MAP
 
 ```{r fig_GrowthMAP, echo=FALSE}
-Growth <- predict.lm(object = growthModel, newdata = list(MAP = dummyMAPDF$MAP),se.fit = TRUE)
+dummyMAPDF <- data.frame(MAP = seq(400,900,1))
+
+  Growth <- predict.lm(object = growthModel, newdata = list(MAP = dummyMAPDF$MAP),interval = "confidence")
 Growth <- tidy(Growth)
 Growth <- cbind(Growth,dummyMAPDF)
 
-Growth$upper.sd <- Growth$se.fit * sqrt(Growth$df + 1)
-Growth$lower.sd <- Growth$se.fit * sqrt(Growth$df + 1)
-
-Growth$upper.ci <- Growth$upper.sd * 3.92 
-Growth$lower.ci <- Growth$lower.sd * 3.92
 
 
 fig_GrowthMAP <- ggplot(data = Growth, aes(x = MAP, y = fit))+
   geom_line()+
-  geom_line(data = Growth, linetype = "dashed", aes(x = MAP, y = fit + upper.ci))+
-  geom_line(data = Growth, linetype = "dashed", aes(x = MAP, y = fit - lower.ci))+
+  geom_line(data = Growth, linetype = "dashed", aes(x = MAP, y = upr))+
+  geom_line(data = Growth, linetype = "dashed", aes(x = MAP, y = lwr))+
   ylim(20,75)+
   xlim(400,1000)+
   ylab("Growth Rate (cm / yr)")+
@@ -372,18 +346,18 @@ fig_GrowthMAP
 
 ## Distribution of Heights by MAP
 
-```{r}
-distributionsPlot <- ggplot(data=treeHeightsByMAP_df_long_summary,aes(x=as.numeric(as.character(Height_Cuts)),y = Proportion, fill=as.factor(MAP_Cuts),group=MAP_Cuts))
+```{r Fig_heightDistributions}
+distributionsPlot <- ggplot(data=treeHeightsByMAP_df_long_summary,aes(x=as.numeric(as.character(Height_Cuts))/100,y = Proportion, fill=as.factor(MAP_Cuts),group=MAP_Cuts))
 distributionsPlot+
   cleanTheme+
   scale_fill_discrete("Mean Annual Precipitation (mm/yr)")+
   theme(text = element_text(size = 35),
         legend.background = element_rect(),
-        legend.position="right",legend.direction="vertical")+
-  guides(col = guide_legend(nrow = 8))+
+        legend.position="none")+
+  guides(col = guide_legend(ncol = 4))+
   ylab("Proportion")+
   xlab("Height (m)")+
-  geom_bar(stat="identity",binwidth=1, position="dodge")
+  geom_bar(stat="identity",binwidth=25, position="dodge")
 ```
 
 ```{r}

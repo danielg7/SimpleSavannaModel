@@ -36,6 +36,11 @@ Found 34856 region(s) and 35041 polygon(s)
 
 ### FF vs. MAP
 
+
+```
+Warning: Removed 57 rows containing missing values (geom_path).
+```
+
 ![plot of chunk fig_FF_MAP](Analysis_and_Figures_files/figure-html/fig_FF_MAP.png) 
 
 ## Model Comparison
@@ -102,6 +107,509 @@ sampleFillDF <- rbind(sampleFillDF,MFRI_sample)
 }
 ```
 
+```
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+Warning: NaNs produced
+```
+
 ## Figures
 
 ### Fuel load vs. MAP
@@ -110,9 +618,21 @@ sampleFillDF <- rbind(sampleFillDF,MFRI_sample)
 
 ### Fire Intensity vs. MAP
 
+
+```
+Warning: Removed 177139 rows containing missing values (geom_point).
+```
+
 ![plot of chunk fig_FireIntensity](Analysis_and_Figures_files/figure-html/fig_FireIntensity.png) 
 
 ### p(Topkill) vs. MAP
+
+
+```
+Warning: Removed 186063 rows containing missing values (stat_smooth).
+Warning: non-integer #successes in a binomial glm!
+Warning: Removed 186063 rows containing missing values (geom_point).
+```
 
 ![plot of chunk fig_pTopkill](Analysis_and_Figures_files/figure-html/fig_pTopkill.png) 
 
@@ -132,17 +652,14 @@ source("Scripts/Growth.R")
 
 # Define start conditions ----
 
-  timeLimit <- 100
+  timeLimit <- 50
   treeNumbers <- 50
-  runs <- 1000
+  runs <- 100
   MAP_previous <- 0
 
 # Functions To Call In Model ----
 
-Fxn_FireIntensity <- function(MAP = numeric(0)){
-  FI <- 4.13*MAP-558.22 # Relationship between MAP and mean fire intensity, Govender et al. 2006
-  return(FI)
-}
+
 
 # Model ----
 
@@ -162,12 +679,10 @@ Fxn_FireIntensity <- function(MAP = numeric(0)){
     }
   }
   
-  if(FireFrequency > 1){FireFrequency = 1}
+  if(FireFrequency > 1) {FireFrequency = 1}
   
   Tree_vector_height <- rep(0,treeNumbers)
   
-  
-  TimeSinceFire <- 0
  
   for(timeSkip in 1:timeLimit){
         
@@ -177,25 +692,18 @@ Fxn_FireIntensity <- function(MAP = numeric(0)){
     burnTest <- rbinom(n = 1,
                        size = 1,
                        prob = FireFrequency) 
-   
-    if(burnTest == 0)
-    {
-      TimeSinceFire <- TimeSinceFire + 1
-    }
-    
+
     if(burnTest == 1)
     {
       
-      FireIntensity <- Fxn_FireIntensity(MAP = MAP_seed) 
+      FireIntensity <- Fxn_FireIntensity_RedoneHistoricalEBP(MAP = MAP_seed,sampleFromCI = TRUE) 
       
       
       fireIntensityList <- append(fireIntensityList,FireIntensity)
 
-      Tree_vector_topkills <- rbinom(n=length(Tree_vector_height),size=1,prob=(1 - (inv.logit(-3.9 * log(Tree_vector_height) + .05 * sqrt(FireIntensity) + .3 * 1))))
+      Tree_vector_topkills <- rbinom(n=length(Tree_vector_height),size=1,prob=(1 - (inv.logit(-3.9 * log(Tree_vector_height) + .05 * sqrt(FireIntensity) + .3 * 1)))) # Higgins et al. 2012
       Tree_vector_height <- Tree_vector_height * Tree_vector_topkills
       Tree_vector_height <- sort(Tree_vector_height)
-      
-      TimeSinceFire <- 0
       
       
     }
@@ -231,10 +739,10 @@ treeHeightsByMAP_df_long$Height_Cuts <- cut(x = treeHeightsByMAP_df_long$Height,
 
 treeHeightsByMAP_df_long$MAP_Cuts <- cut(x = treeHeightsByMAP_df_long$MAP,
                                          right = TRUE,
-                                            breaks = seq(300,
+                                            breaks = seq(400,
                                                          900,
-                                                         20))
-levels(treeHeightsByMAP_df_long$MAP_Cuts) <- seq(300,900,20)
+                                                         50))
+levels(treeHeightsByMAP_df_long$MAP_Cuts) <- seq(400,900,50)
 treeHeightsByMAP_df_long$MAP_Cuts <- as.character(treeHeightsByMAP_df_long$MAP_Cuts)
 treeHeightsByMAP_df_long$MAP_Cuts <- as.numeric(treeHeightsByMAP_df_long$MAP_Cuts)
 
@@ -252,10 +760,10 @@ intensityByMAP_df$MAP <- as.numeric(intensityByMAP_df$MAP)
 
 intensityByMAP_df$MAP_Cuts <- cut(x = intensityByMAP_df$MAP,
                                          right = TRUE,
-                                         breaks = seq(300,
+                                         breaks = seq(400,
                                                       900,
-                                                      20))
-levels(intensityByMAP_df$MAP_Cuts) <- seq(300,900,20)
+                                                      50))
+levels(intensityByMAP_df$MAP_Cuts) <- seq(400,900,50)
 intensityByMAP_df$MAP_Cuts <- as.character(intensityByMAP_df$MAP_Cuts)
 intensityByMAP_df$MAP_Cuts <- as.numeric(intensityByMAP_df$MAP_Cuts)
 
@@ -290,7 +798,13 @@ pEscape$MAP <- as.numeric(as.character(pEscape$MAP))
 
 ## Intensity by MAP
 
-![plot of chunk fig_FIMAP](Analysis_and_Figures_files/figure-html/fig_FIMAP.png) 
+
+```
+Warning: No method for tidying an S3 object of class list , using
+as.data.frame
+```
+
+![plot of chunk fig_FIMAP](Analysis_and_Figures_files/figure-html/fig_FIMAP1.png) ![plot of chunk fig_FIMAP](Analysis_and_Figures_files/figure-html/fig_FIMAP2.png) 
 
 ## Growth by MAP
 
@@ -302,28 +816,53 @@ pEscape$MAP <- as.numeric(as.character(pEscape$MAP))
 
 
 ```r
-distributionsPlot <- ggplot(data=treeHeightsByMAP_df_long_summary,aes(x=as.numeric(as.character(Height_Cuts)),y = Proportion, fill=as.factor(MAP_Cuts),group=MAP_Cuts))
+distributionsPlot <- ggplot(data=treeHeightsByMAP_df_long_summary,aes(x=as.numeric(as.character(Height_Cuts))/100,y = Proportion, fill=as.factor(MAP_Cuts),group=MAP_Cuts))
 distributionsPlot+
   cleanTheme+
   scale_fill_discrete("Mean Annual Precipitation (mm/yr)")+
   theme(text = element_text(size = 35),
         legend.background = element_rect(),
-        legend.position="right",legend.direction="vertical")+
-  guides(col = guide_legend(nrow = 8))+
+        legend.position="none")+
+  guides(col = guide_legend(ncol = 4))+
   ylab("Proportion")+
   xlab("Height (m)")+
-  geom_bar(stat="identity",binwidth=1, position="dodge")
+  geom_bar(stat="identity",binwidth=25, position="dodge")
 ```
 
-![plot of chunk unnamed-chunk-4](Analysis_and_Figures_files/figure-html/unnamed-chunk-4.png) 
+```
+Warning: position_dodge requires constant width: output may be incorrect
+```
+
+![plot of chunk Fig_heightDistributions](Analysis_and_Figures_files/figure-html/Fig_heightDistributions.png) 
 
 
 ```r
 glm_pEscape_null <- glm(data = na.omit(pEscape), pResult ~ 1, family = "binomial")
-glm_pEscape_MAP <- glm(data = na.omit(pEscape), pResult ~ MAP_Cuts, family = "binomial")
+```
 
+```
+Warning: non-integer #successes in a binomial glm!
+```
+
+```r
+glm_pEscape_MAP <- glm(data = na.omit(pEscape), pResult ~ MAP_Cuts, family = "binomial")
+```
+
+```
+Warning: non-integer #successes in a binomial glm!
+```
+
+```r
 pEscape_pred <- predict.glm(object = glm_pEscape_MAP, type = "link", newdata = list(MAP_Cuts = dummyMAPDF$MAP),se.fit = TRUE)
 pEscape_pred <- tidy(pEscape_pred)
+```
+
+```
+Warning: No method for tidying an S3 object of class list , using
+as.data.frame
+```
+
+```r
 pEscape_pred <- cbind(pEscape_pred,dummyMAPDF)
 
 pEscape_pred$upper.ci <- plogis(pEscape_pred$fit+(1.96 * (pEscape_pred$se.fit)))
@@ -334,5 +873,10 @@ pEscape_pred$fit <- inv.logit(pEscape_pred$fit)
 ```
 
 ## Probability of Escape by MAP
+
+
+```
+Warning: Removed 1 rows containing missing values (geom_point).
+```
 
 ![plot of chunk fig_pEscape](Analysis_and_Figures_files/figure-html/fig_pEscape.png) 

@@ -37,13 +37,19 @@
 height_max <- 600 / 100 # 600 cm as defined in Higgins et al. 2000 per Shackleton 1997
 
 MAP_growth <- data.frame(MAP = c(300,600,1000,1400), Growth = c(35,45,60,80))
-growthModel <- lm(Growth ~ MAP, MAP_growth)
+growthModel <- lm(Growth ~ MAP, data = MAP_growth) # Add sampling from CI for growth data.
 
 treeGrowth <- function(height_previous = numeric(0), MAP = numeric(0))
 {
-  growthRate <- predict.lm(object = growthModel, newdata = list(MAP = MAP))
   
-  h <- height_previous + (1 + height_previous / height_max) * growthRate/100
+  growthRate <- predict.lm(object = growthModel, newdata = list(MAP = MAP),interval = "confidence")
+  growthRate <- tidy(growthRate)
+  
+  growthRate$length <- length(height_previous)
+  
+  GR <- growthRate$fit
+  
+  h <- height_previous + (1 + height_previous / height_max) * GR/100
   
   
   
