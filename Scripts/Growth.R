@@ -39,8 +39,9 @@ height_max <- 600 / 100 # 600 cm as defined in Higgins et al. 2000 per Shackleto
 MAP_growth <- data.frame(MAP = c(300,600,1000,1400), Growth = c(35,45,60,80))
 growthModel <- lm(Growth ~ MAP, data = MAP_growth) # Add sampling from CI for growth data.
 
-treeGrowth <- function(height_previous = numeric(0), MAP = numeric(0))
+treeGrowth <- function(height_previous = numeric(0), MAP = numeric(0), Flat = FALSE)
 {
+  
   
   growthRate <- predict.lm(object = growthModel, newdata = list(MAP = MAP),interval = "confidence")
   growthRate <- tidy(growthRate)

@@ -48,40 +48,49 @@ cleanTheme <- ggthemes::theme_tufte() +
     axis.line = ggplot2::element_line(size = .5)
   )
 
-# Load data ----
+if(file.exists("Data/krugerMAP_FRI_df.csv"))
+{
+  krugerMAP_FRI_df <- read.csv("Data/krugerMAP_FRI_df.csv")
+}
 
-krugerFRI <- readOGR(dsn="Data/FRI/",layer = "fire return interval_1941to2006")
-krugerMAP_UTM <- raster(x="Data/krugerMAP_UTM")
-
-# Transform data ----
-
-crs.k <- CRS("+proj=utm +zone=36 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0")
-krugerFRI_UTM <- spTransform(krugerFRI,crs.k)
-
-krugerFRIRaster <- raster(krugerMAP_UTM)
-
-krugerFRIRaster <- rasterize(x = krugerFRI_UTM,
-                             y = krugerFRIRaster,
-                             field=krugerFRI_UTM$MFRI)
-
-krugerMAP_FRI <- brick(krugerFRIRaster,krugerMAP_UTM)
-
-# Clean and output data ----
-
-names(krugerMAP_FRI) <- c("MFRI","MAP_mm")
-
-krugerMAP_FRI_df <- as.data.frame(krugerMAP_FRI)
-
-rm(krugerMAP_FRI,krugerFRIRaster,krugerFRI_UTM,crs.k,krugerMAP_UTM,krugerFRI)
-
-krugerMAP_FRI_df <- na.omit(krugerMAP_FRI_df)
-
-krugerMAP_FRI_df$FF <- 1/krugerMAP_FRI_df$MFRI
-
+if(!file.exists("Data/krugerMAP_FRI_df.csv"))
+{
+  # Load data ----
+  
+  krugerFRI <- readOGR(dsn="Data/FRI/",layer = "fire return interval_1941to2006")
+  krugerMAP_UTM <- raster(x="Data/krugerMAP_UTM")
+  
+  # Transform data ----
+  
+  crs.k <- CRS("+proj=utm +zone=36 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0")
+  krugerFRI_UTM <- spTransform(krugerFRI,crs.k)
+  
+  krugerFRIRaster <- raster(krugerMAP_UTM)
+  
+  krugerFRIRaster <- rasterize(x = krugerFRI_UTM,
+                               y = krugerFRIRaster,
+                               field=krugerFRI_UTM$MFRI)
+  
+  krugerMAP_FRI <- brick(krugerFRIRaster,krugerMAP_UTM)
+  
+  # Clean and output data ----
+  
+  names(krugerMAP_FRI) <- c("MFRI","MAP_mm")
+  
+  krugerMAP_FRI_df <- as.data.frame(krugerMAP_FRI)
+  
+  rm(krugerMAP_FRI,krugerFRIRaster,krugerFRI_UTM,crs.k,krugerMAP_UTM,krugerFRI)
+  
+  krugerMAP_FRI_df <- na.omit(krugerMAP_FRI_df)
+  
+  krugerMAP_FRI_df$FF <- 1/krugerMAP_FRI_df$MFRI
+  
+  write.csv(krugerMAP_FRI_df,file = "Data/krugerMAP_FRI_df.csv")
+}
 
 # Plot relationship ----
 
-MFRI_MAP_binomial <- ggplot(data = krugerMAP_FRI_df, aes(x = MAP_mm, y = MFRI))+
+MFRI_MAP_binomial <- ggplot(data = krugerMAP_FRI_df, aes(x = MAP_mm, y = 1/MFRI))+
   geom_point(alpha = .5)+
   #ylab("Fire Frequency (Fires / yr)")+
   xlab("Mean Annual Precipitation (mm)")+
@@ -91,6 +100,7 @@ MFRI_MAP_binomial
 
 
 # Model relationship ----
+krugerMAP_FRI_df <- subset(krugerMAP_FRI_df,MFRI <= 20)
 
 glm_MFRI_null <- glm(data = krugerMAP_FRI_df, formula = MFRI ~ 1, family = Gamma(link = log))
 glm_MFRI_MAP <- glm(data = krugerMAP_FRI_df, formula = MFRI ~ MAP_mm, family = Gamma(link = log))
@@ -102,22 +112,18 @@ mfridist_var <- var(krugerMAP_FRI_df$MFRI)
 mfridist_shape_est <- mfridist_mean^2 / mfridist_var
 mfridist_scale_est <- mfridist_var / mfridist_mean 
 
-#mfridist_fitted <- MASS::fitdistr(x = krugerMAP_FRI_df$MFRI,
-#                         densfun = "gamma",
-#                         start = list( shape = mfridist_shape_est,
-#                                       scale = mfridist_scale_est))
 
 
 mfridist_fitted <- bbmle::mle2(data = krugerMAP_FRI_df,MFRI ~ dgamma(shape, scale = scale),
                          start = list( shape = mfridist_shape_est,
-                                       scale = mfridist_scale_est))
+                                      scale = mfridist_scale_est))
 
 
 mfridist_shape <- mfridist_fitted@coef[1]
 mfridist_scale <- mfridist_fitted@coef[2]
 
 
-gammaDistDF <- data.frame(var = rgamma(n = length(krugerMAP_FRI_df),
+gammaDistDF <- data.frame(var = rgamma(n = 1000000*length(krugerMAP_FRI_df),
                                        shape = mfridist_shape,
                                        scale = mfridist_scale))
 
@@ -129,46 +135,48 @@ MFRI_density <- ggplot(data = krugerMAP_FRI_df, aes(x = MFRI))+
   cleanTheme
 MFRI_density
 
-# Predict relationship of MFRI ~ MAP ----
-
-MAP_FF_modelCompare <- krugerMAP_FRI_df
-
-MAP_FF_modelCompare$predicted <- exp(predict(object = glm_MFRI_MAP, newdata = MAP_FF_modelCompare))
-
-MAP_FF_predicted <- predict.glm(glm_MFRI_MAP, newdata = MAP_FF_modelCompare, se.fit=TRUE, type="link", interval="prediction")
-
-MAP_FF_predicted <- tidy(MAP_FF_predicted)
-MAP_FF_predicted <- exp(MAP_FF_predicted)
-
-upper <- qgamma(p = .95, shape = mfridist_shape,scale = mfridist_scale)
-lower <- qgamma(p = .05, shape = mfridist_shape,scale = mfridist_scale)
-
-MAP_FF_modelCompare$usd <- MAP_FF_predicted$fit + upper * MAP_FF_predicted$se.fit
-MAP_FF_modelCompare$lsd <- MAP_FF_predicted$fit - lower * MAP_FF_predicted$se.fit
 
 # Make sampling function -----
 
-MFRI_from_MAP <- function(MAP = numeric(0)){
-  if(!is.numeric(MAP))stop("MAP must be numeric!")
-  if(MAP < 400 || MAP > 950)stop("MAP must be constrained between 400 and 950!")
-  
-  predicted <- predict.glm(glm_MFRI_MAP, newdata = list(MAP_mm = MAP), se.fit=TRUE, type="link", interval="prediction")
-  
-  upper <- qgamma(p = .95, shape = mfridist_shape,scale = mfridist_shape)
-  lower <- qgamma(p = .05, shape = mfridist_shape,scale = mfridist_shape)
-  
-  
-  usd <- predicted$fit + upper * predicted$se.fit
-  lsd <- predicted$fit - lower * predicted$se.fit
-  
-  results <- list(MAP = MAP, predicted = predicted$fit, usd = usd, lsd = lsd)
-  
-  return(results)
-}
+# Really ought to just sample directly from the known distribution. Why model when we can do it like this?
 
-# Make df of potential values ---- 
 
-MAP_range <- seq(400,950,1)
-MFRI_estimates <- as.data.frame(MFRI_from_MAP(MAP_range))
-MFRI_expand <- ddply(.data = MFRI_estimates, .(MAP), summarize, MFRI_estimates = seq(lsd,usd,by = .01))
-
+  MFRI_from_MAP <- function(MAP = numeric(0), Flat = FALSE){
+    if(!is.numeric(MAP))stop("MAP must be numeric!")
+    if(MAP < 400 || MAP > 950)stop("MAP must be constrained between 400 and 950!")
+    if(!is.logical(Flat))stop("Flat must be TRUE or FALSE!")
+    
+    if(Flat == FALSE){
+      predMFRI <- predict.glm(object = glm_MFRI_MAP, type = "link", newdata = list(MAP_mm = MAP))
+      
+      
+      mean <- exp(predMFRI)
+      var <- summary(glm_MFRI_MAP)$dispersion * mean^2
+      shape_est <- mean^2 / var
+      scale_est <- var / mean 
+      
+      dist <- rgamma(n = 100000,shape = shape_est,scale = scale_est)
+      
+      MFRI <- sample(x = dist,size = length(MAP),replace = TRUE)
+      
+      MFRI <- exp(MFRI)
+    }
+    
+    if(Flat == TRUE){
+      predMFRI <- predict.glm(object = glm_MFRI_null, type = "link")
+      
+      
+      mean <- exp(predMFRI)
+      var <- summary(glm_MFRI_MAP)$dispersion * mean^2
+      shape_est <- mean^2 / var
+      scale_est <- var / mean 
+      
+      dist <- rgamma(n = 100000,shape = shape_est,scale = scale_est)
+      
+      MFRI <- sample(x = dist,size = length(MAP),replace = TRUE)
+      
+      MFRI <- exp(MFRI)
+    }
+    
+    return(MFRI)
+  }

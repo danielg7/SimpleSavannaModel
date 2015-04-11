@@ -32,49 +32,50 @@ source("Scripts/MFRI_MAP.R")
 ### MFRI vs. MAP
 
 ```{r fig_MFRI_MAP, echo=FALSE, warnings = FALSE, message=FALSE}
-modelCompare_binom <- ggplot(data = MAP_FF_modelCompare, aes(x = MAP_mm, y = MFRI))+
-  geom_jitter(alpha = .55, color = "gray90")+
-  geom_line(color = "black", aes(x = MAP_mm, y = MAP_FF_modelCompare$predicted))+
-  geom_line(color = "gray50", aes(x = MAP_mm, y = MAP_FF_modelCompare$usd))+
-  geom_line(color = "gray50", aes(x = MAP_mm, y = MAP_FF_modelCompare$lsd))+
-  ylab("Mean Fire Return Interval (Yr)")+
-  xlab("Mean Annual Precipitation (mm)")+
-  cleanTheme
-modelCompare_binom
+#MAP_MFRI_modelCompare <- data.frame(MAP_mm = rep(seq(400,900,1),each=1000))
+#MAP_MFRI_modelCompare$MFRI <- MFRI_from_MAP(MAP = MAP_FF_modelCompare$MAP_mm)
+
+#modelCompare_binom <- ggplot(data = MAP_MFRI_modelCompare, aes(x = MAP_mm, y = 1/MFRI))+
+#  geom_point(color = "gray90")+
+#  ylim(0,1)+
+#  ylab("Mean Fire Return Interval (Yr)")+
+#  xlab("Mean Annual Precipitation (mm)")+
+#  cleanTheme
+#modelCompare_binom
 ```
 
 ### FF vs. MAP
 
 ```{r fig_FF_MAP, echo=FALSE}
-modelCompare_binom <- ggplot(data = MAP_FF_modelCompare, aes(x = MAP_mm, y = 1/MFRI))+
-  geom_jitter(alpha = .50, color = "gray90")+
-  ylim(0,1)+
-  geom_line(color = "black", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$predicted))+
-  geom_line(color = "gray50", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$usd))+
-  geom_line(color = "gray50", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$lsd))+
-  # geom_smooth(method = "glm", family="Gamma", formula = y ~ x, fill = "gray85", size = 2)+
-  ylab("Fire Frequency (Fires / Yr)")+
-  xlab("Mean Annual Precipitation (mm)")+
-  cleanTheme
-modelCompare_binom
+# modelCompare_binom <- ggplot(data = MAP_FF_modelCompare, aes(x = MAP_mm, y = 1/MFRI))+
+#   geom_jitter(alpha = .50, color = "gray90")+
+#   ylim(0,1)+
+#   geom_line(color = "black", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$predicted))+
+#   geom_line(color = "gray50", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$usd))+
+#   geom_line(color = "gray50", aes(x = MAP_mm, y = 1/MAP_FF_modelCompare$lsd))+
+#   # geom_smooth(method = "glm", family="Gamma", formula = y ~ x, fill = "gray85", size = 2)+
+#   ylab("Fire Frequency (Fires / Yr)")+
+#   xlab("Mean Annual Precipitation (mm)")+
+#   cleanTheme
+# modelCompare_binom
 ```
 
 ## Model Comparison
 
 ```{r modelCompare_Plot, echo=FALSE}
-modelCompare_plot <- ggplot(data = MAP_FF_modelCompare, aes(x = MFRI, y = predicted))+
-  geom_point(alpha = .01)+
-  coord_fixed()+
-  ylab("Predicted")+
-  xlab("Real")+
-  cleanTheme
-modelCompare_plot
+# modelCompare_plot <- ggplot(data = MAP_FF_modelCompare, aes(x = MFRI, y = predicted))+
+#   geom_point(alpha = .01)+
+#   coord_fixed()+
+#   ylab("Predicted")+
+#   xlab("Real")+
+#   cleanTheme
+# modelCompare_plot
 ```
 
 ### lm MFRI ~ Predicted 
 
 ```{r modelCompare, echo=FALSE,results='asis'}
-stargazer(lm(MFRI ~ predicted, data = MAP_FF_modelCompare),type = "html")
+# stargazer(lm(MFRI ~ predicted, data = MAP_FF_modelCompare),type = "html")
 ```
 
 # Model Fuel Load and Intensity as a function of MFRI and MAP
@@ -124,21 +125,14 @@ source("Scripts/Growth.R")
 
   for(u in 1:Runs){
     
-  randomLine <- sample(x = nrow(MFRI_expand),size = 1, replace = FALSE)
-  MAP_seed <- MFRI_expand[randomLine,1]
-  FireFrequency <- 1/MFRI_expand[randomLine,2]
   
+  MAP_seed <- sample(x = seq(400,900,1), size = 1)
+  FireFrequency <- 1/MFRI_from_MAP(MAP = MAP_seed, Flat = FireFrequencyFlat)
+  if(FireFrequency > 1) {FireFrequency <- 1}
  
   
-  if(!is.numeric(MAP_seed)){
-    while(!is.numeric(MAP_seed)){
-      randomLine <- sample(x = nrow(MFRI_expand),size = 1, replace = FALSE)
-  MAP_seed <- MFRI_expand[randomLine,1]
-  FireFrequency <- 1/MFRI_expand[randomLine,2]
-    }
-  }
   
-  if(FireFrequency > 1) {FireFrequency = 1}
+  
   
   Tree_vector_height <- rep(0,treeNumbers)
   
@@ -146,7 +140,7 @@ source("Scripts/Growth.R")
   for(timeSkip in 1:timeLimit){
         
 
-   Tree_vector_height <- treeGrowth(height_previous = Tree_vector_height, MAP = MAP_seed)
+   Tree_vector_height <- treeGrowth(height_previous = Tree_vector_height, MAP = MAP_seed,Flat = GrowthFlat)
 
 
     burnTest <- rbinom(n = 1,
