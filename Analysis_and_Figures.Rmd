@@ -89,7 +89,7 @@ source("Scripts/Intensity_MAP.R")
 # Model growth of stems
 
 
-```{r echo=TRUE}
+```{r Model, echo=TRUE}
 source("Scripts/Growth.R")
 
 # Create empty dataframes ----
@@ -125,9 +125,16 @@ source("Scripts/Growth.R")
 
   for(u in 1:Runs){
     
+  MAP_seed <- sample(x = seq(from = min(krugerMAP_FRI_df$MAP_mm),
+                                to = max(krugerMAP_FRI_df$MAP_mm),
+                                by = 1),
+                        size = 1)
+  MAP_seed  
+  MFRI <- MFRI_from_MAP_mean(MAP = MAP_seed,Flat = FireFrequencyFlat)
+  MFRI
+  FireFrequency <- 1/MFRI
   
-  MAP_seed <- sample(x = seq(400,900,1), size = 1)
-  FireFrequency <- 1/MFRI_from_MAP(MAP = MAP_seed, Flat = FireFrequencyFlat)
+  FireFrequency
   if(FireFrequency > 1) {FireFrequency <- 1}
  
   
@@ -185,8 +192,8 @@ treeHeightsByMAP_df_long <- melt(treeHeightsByMAP_df,variable_name = "MAP")
 names(treeHeightsByMAP_df_long) <- c("MAP","Height")
 treeHeightsByMAP_df_long$MAP <- as.numeric(as.character(substring(treeHeightsByMAP_df_long$MAP, 2)))
 
-dataLoc <- file.path(paste(simTime,"_treeHeightsByMAP",".csv",sep = ""))
-metadataLoc <- file.path(paste(simTime,"_metadata",".csv",sep = ""))
+dataLoc <- file.path(paste("Runs/",simTime,"_treeHeightsByMAP",".csv",sep = ""))
+metadataLoc <- file.path("Runs/",paste(simTime,"_metadata",".csv",sep = ""))
 write.csv(x = treeHeightsByMAP_df_long, file=dataLoc)
 write.csv(x = simMetadata, file=metadataLoc)
 

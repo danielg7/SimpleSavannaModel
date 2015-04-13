@@ -138,10 +138,9 @@ MFRI_density
 
 # Make sampling function -----
 
-# Really ought to just sample directly from the known distribution. Why model when we can do it like this?
 
 
-  MFRI_from_MAP <- function(MAP = numeric(0), Flat = FALSE){
+MFRI_from_MAP <- function(MAP = numeric(0), Flat = FALSE){
     if(!is.numeric(MAP))stop("MAP must be numeric!")
     if(MAP < 400 || MAP > 950)stop("MAP must be constrained between 400 and 950!")
     if(!is.logical(Flat))stop("Flat must be TRUE or FALSE!")
@@ -180,3 +179,29 @@ MFRI_density
     
     return(MFRI)
   }
+
+# Really ought to just sample directly from the known distribution. Why model when we can do it like this?
+
+
+
+sampleFromMFRI_Data <- function(n = 1, Flat = FALSE){
+  if(!is.numeric(n))stop("n must be numeric!")
+  if(!is.logical(Flat))stop("Flat must be TRUE or FALSE!")
+  
+  if(Flat == FALSE){
+    rows <- sample(x = seq(from = 1, to = nrow(krugerMAP_FRI_df),by = 1), size = n, replace = TRUE)
+    
+    returnValues <- list(MFRI = krugerMAP_FRI_df[rows,]$MFRI, MAP_mm = krugerMAP_FRI_df[rows,]$MAP_mm)
+  }
+  
+  if(Flat == TRUE){
+    mfri_rows <- sample(x = seq(from = 1, to = nrow(krugerMAP_FRI_df),by = 1), size = n, replace = TRUE)
+    map_rows <- sample(x = seq(from = 1, to = nrow(krugerMAP_FRI_df),by = 1), size = n, replace = TRUE)
+
+    
+    returnValues <- list(MFRI = krugerMAP_FRI_df[mfri_rows,]$MFRI, MAP_mm = krugerMAP_FRI_df[map_rows,]$MAP_mm)
+    
+  }
+  
+  return(returnValues)
+}
