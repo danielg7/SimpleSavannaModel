@@ -41,6 +41,7 @@ library(reshape2)
 library(broom)
 library(bbmle)
 library(plyr)
+library(MASS)
 
 cleanTheme <- ggthemes::theme_tufte() +
   ggplot2::theme(
@@ -90,20 +91,23 @@ if(!file.exists("Data/krugerMAP_FRI_df.csv"))
 
 # Plot relationship ----
 
-MFRI_MAP_binomial <- ggplot(data = krugerMAP_FRI_df, aes(x = MAP_mm, y = 1/MFRI))+
+
+
+MFRI_MAP_binomial <- ggplot(data = krugerMAP_FRI_df, aes(x = MAP_mm, y = MFRI))+
   geom_point(alpha = .5)+
+  ylim(0,10)+
   #ylab("Fire Frequency (Fires / yr)")+
   xlab("Mean Annual Precipitation (mm)")+
   ylab("Mean Fire Return Interval (yr)")+
-  cleanTheme
+  cleanTheme+
+  stat_smooth(method="glm", family = "Gamma")
 MFRI_MAP_binomial
 
-
 # Model relationship ----
-krugerMAP_FRI_df <- subset(krugerMAP_FRI_df,MFRI <= 20)
+#krugerMAP_FRI_df <- subset(krugerMAP_FRI_df,MFRI <= 20)
 
 glm_MFRI_null <- glm(data = krugerMAP_FRI_df, formula = MFRI ~ 1, family = Gamma(link = log))
-glm_MFRI_MAP <- glm(data = krugerMAP_FRI_df, formula = MFRI ~ MAP_mm, family = Gamma(link = log))
+glm_MFRI_MAP <- glm(data = krugerMAP_FRI_df, formula = MFRI ~ MAP_mm, family = Gamma(link = inverse))
 
 # Model distribution of MFRI ----
 
@@ -113,14 +117,15 @@ mfridist_shape_est <- mfridist_mean^2 / mfridist_var
 mfridist_scale_est <- mfridist_var / mfridist_mean 
 
 
+mfridist_fitted <- fitdistr(krugerMAP_FRI_df$MFRI, dgamma,  start=list(shape = mfridist_shape_est, rate = 1/mfridist_scale_est),lower=0.001)
 
-mfridist_fitted <- bbmle::mle2(data = krugerMAP_FRI_df,MFRI ~ dgamma(shape, scale = scale),
-                         start = list( shape = mfridist_shape_est,
-                                      scale = mfridist_scale_est))
+#mfridist_fitted <- bbmle::mle2(data = krugerMAP_FRI_df,MFRI ~ dgamma(shape, scale = scale),
+#                         start = list( shape = mfridist_shape_est,
+#                                      scale = mfridist_scale_est))
 
 
-mfridist_shape <- mfridist_fitted@coef[1]
-mfridist_scale <- mfridist_fitted@coef[2]
+mfridist_shape <- mfridist_fitted$estimate[1]
+mfridist_scale <- 1/mfridist_fitted$estimate[2]
 
 
 gammaDistDF <- data.frame(var = rgamma(n = 1000000*length(krugerMAP_FRI_df),
@@ -138,7 +143,48 @@ MFRI_density
 
 # Make sampling function -----
 
+# Make this next one once again pull from the 95% CI of the modeled response
 
+MFRI_from_MAP_mean <- function(MAP = numeric(0), Flat = FALSE){
+  if(!is.numeric(MAP))stop("MAP must be numeric!")
+  if(MAP < 400 || MAP > 950)stop("MAP must be constrained between 400 and 950!")
+  if(!is.logical(Flat))stop("Flat must be TRUE or FALSE!")
+  
+  if(Flat == FALSE){
+    predMFRI <- predict.glm(object = glm_MFRI_MAP, type = "link", newdata = list(MAP_mm = MAP))
+    
+    
+    mean <- 1/predMFRI
+    var <- summary(glm_MFRI_MAP)$dispersion * mean^2
+    shape_est <- mean^2 / var
+    scale_est <- var / mean 
+    
+    dist <- MASS::fitdistr(x = mean, densfun = dgamma,  start=list(shape = shape_est, rate = 1/scale_est), lower=c(0.01,0.01))
+    rangeVals <- qgamma(p = seq(from = .05,to = .95,by = .01),shape = dist$estimate[1],scale = 1/dist$estimate[2])
+    
+  
+    
+    MFRI <- sample(x = rangeVals,size = length(MAP),replace = TRUE)
+    
+  }
+  
+  if(Flat == TRUE){
+    predMFRI <- predict.glm(object = glm_MFRI_null, type = "link")
+    
+    
+    mean <- exp(predMFRI)
+    var <- summary(glm_MFRI_MAP)$dispersion * mean^2
+    shape_est <- mean^2 / var
+    scale_est <- var / mean 
+    
+    dist <- rgamma(n = 100000,shape = shape_est,scale = scale_est)
+    
+    MFRI <- sample(x = dist,size = length(MAP),replace = TRUE)
+    
+  }
+  
+  return(MFRI)
+}
 
 MFRI_from_MAP <- function(MAP = numeric(0), Flat = FALSE){
     if(!is.numeric(MAP))stop("MAP must be numeric!")
@@ -179,10 +225,6 @@ MFRI_from_MAP <- function(MAP = numeric(0), Flat = FALSE){
     
     return(MFRI)
   }
-
-# Really ought to just sample directly from the known distribution. Why model when we can do it like this?
-
-
 
 sampleFromMFRI_Data <- function(n = 1, Flat = FALSE){
   if(!is.numeric(n))stop("n must be numeric!")
