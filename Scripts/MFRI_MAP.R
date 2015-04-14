@@ -41,6 +41,7 @@ library(reshape2)
 library(broom)
 library(bbmle)
 library(plyr)
+library(survival)
 library(MASS)
 
 cleanTheme <- ggthemes::theme_tufte() +
@@ -95,12 +96,16 @@ if(!file.exists("Data/krugerMAP_FRI_df.csv"))
 
 MFRI_MAP_binomial <- ggplot(data = krugerMAP_FRI_df, aes(x = MAP_mm, y = MFRI))+
   geom_point(alpha = .5)+
-  ylim(0,10)+
+ # ylim(0,10)+
   #ylab("Fire Frequency (Fires / yr)")+
   xlab("Mean Annual Precipitation (mm)")+
   ylab("Mean Fire Return Interval (yr)")+
   cleanTheme+
   stat_smooth(method="glm", family = "Gamma")
+ # geom_line(data = sr_MFRI_MAP_df, aes(x = MAP_mm, y = srpred))+
+#  geom_line(data = sr_MFRI_MAP_df, aes(x = MAP_mm, y = srpred_95))+
+#  geom_line(data = sr_MFRI_MAP_df, aes(x = MAP_mm, y = srpred_05))
+
 MFRI_MAP_binomial
 
 # Model relationship ----
@@ -108,6 +113,14 @@ MFRI_MAP_binomial
 
 glm_MFRI_null <- glm(data = krugerMAP_FRI_df, formula = MFRI ~ 1, family = Gamma(link = log))
 glm_MFRI_MAP <- glm(data = krugerMAP_FRI_df, formula = MFRI ~ MAP_mm, family = Gamma(link = inverse))
+
+sr_MFRI_MAP <- survival::survreg(data = krugerMAP_FRI_df, formula = Surv(MFRI) ~ MAP_mm, dist='weibull')
+
+sr_MFRI_MAP_df <- data.frame(MAP_mm = seq(400,900,1))
+sr_MFRI_MAP_df$srpred <- predict(sr_MFRI_MAP,newdata = sr_MFRI_MAP_df)
+sr_MFRI_MAP_df$srpred_95 <- predict(sr_MFRI_MAP,newdata = sr_MFRI_MAP_df,type="quantile",p=.95)
+sr_MFRI_MAP_df$srpred_05 <- predict(sr_MFRI_MAP,newdata = sr_MFRI_MAP_df,type="quantile",p=.05)
+
 
 # Model distribution of MFRI ----
 
@@ -119,6 +132,8 @@ mfridist_scale_est <- mfridist_var / mfridist_mean
 
 mfridist_fitted <- fitdistr(krugerMAP_FRI_df$MFRI, dgamma,  start=list(shape = mfridist_shape_est, rate = 1/mfridist_scale_est),lower=0.001)
 
+mfridist_fitted_weibull <- fitdistr(krugerMAP_FRI_df$MFRI, 'weibull')
+sr_MFRI_1 <- survival::survreg(data = krugerMAP_FRI_df, formula = Surv(MFRI) ~ 1, dist='weibull')
 #mfridist_fitted <- bbmle::mle2(data = krugerMAP_FRI_df,MFRI ~ dgamma(shape, scale = scale),
 #                         start = list( shape = mfridist_shape_est,
 #                                      scale = mfridist_scale_est))
@@ -132,6 +147,10 @@ gammaDistDF <- data.frame(var = rgamma(n = 1000000*length(krugerMAP_FRI_df),
                                        shape = mfridist_shape,
                                        scale = mfridist_scale))
 
+weibullDistDF <- data.frame(var = rweibull(n = 1000000*length(krugerMAP_FRI_df),
+                                       shape = mfridist_fitted_weibull$estimate[1],
+                                       scale = mfridist_fitted_weibull$estimate[2]))
+
 
 MFRI_density <- ggplot(data = krugerMAP_FRI_df, aes(x = MFRI))+
   geom_density(fill = "blue", alpha = ".5")+
@@ -143,7 +162,38 @@ MFRI_density
 
 # Make sampling function -----
 
-# Make this next one once again pull from the 95% CI of the modeled response
+# Begin Rico Code -----
+
+N <- nrow(krugerMAP_FRI_df)
+gammaNLL <- function(k, shape, scale){
+  -sum(dgamma(k, shape=shape, scale=scale, log=TRUE))
+}
+
+mod.gamma <- mle2(minuslogl = gammaNLL, start = list(shape=3.1, scale=2), data = list(k=krugerMAP_FRI_df$MFRI))
+
+
+x <- seq(0:70)
+ygam <- dgamma(x, shape = 3.1, scale = 1.93, log = FALSE)
+
+hist(krugerMAP_FRI_df$MFRI,breaks=x)
+lines(x,ygam*N,type="l",col="red")
+
+# Now fit a gamma rainfall model
+gammaNLL.map <- function(k, MAP, a, b, c){
+  -sum(dgamma(k, shape=a*MAP + b, scale=c, log=TRUE))
+}
+
+mod.gamma.map <- mle2(minuslogl = gammaNLL.map, start = list(a=-0.005, b=6, c=1.6),
+                      data = list(k=krugerMAP_FRI_df$MFRI, MAP=krugerMAP_FRI_df$MAP_mm))
+anova(mod.gamma,mod.gamma.map)
+
+# Generate some random data
+mod.map <- mle2(minuslogl = gammaNLL, start = list(shape=50, scale=11), data = list(k=krugerMAP_FRI_df$MAP_mm))
+
+sampleDF <- data.frame(MAP_mm = rgamma(10000, shape=50.6, scale=11),MFRI = NA)
+sampleDF$MFRI <- rgamma(10000, shape=-0.0048*sampleDF$MAP_mm + 5.97, scale=1.85)
+
+# End Rico Code---
 
 MFRI_from_MAP_mean <- function(MAP = numeric(0), Flat = FALSE){
   if(!is.numeric(MAP))stop("MAP must be numeric!")
@@ -231,17 +281,17 @@ sampleFromMFRI_Data <- function(n = 1, Flat = FALSE){
   if(!is.logical(Flat))stop("Flat must be TRUE or FALSE!")
   
   if(Flat == FALSE){
-    rows <- sample(x = seq(from = 1, to = nrow(krugerMAP_FRI_df),by = 1), size = n, replace = TRUE)
+    rows <- sample(x = seq(from = 1, to = nrow(sampleDF),by = 1), size = n, replace = TRUE)
     
-    returnValues <- list(MFRI = krugerMAP_FRI_df[rows,]$MFRI, MAP_mm = krugerMAP_FRI_df[rows,]$MAP_mm)
+    returnValues <- list(MFRI = sampleDF[rows,]$MFRI, MAP_mm = sampleDF[rows,]$MAP_mm)
   }
   
   if(Flat == TRUE){
-    mfri_rows <- sample(x = seq(from = 1, to = nrow(krugerMAP_FRI_df),by = 1), size = n, replace = TRUE)
-    map_rows <- sample(x = seq(from = 1, to = nrow(krugerMAP_FRI_df),by = 1), size = n, replace = TRUE)
+    mfri_rows <- sample(x = seq(from = 1, to = nrow(sampleDF),by = 1), size = n, replace = TRUE)
+    map_rows <- sample(x = seq(from = 1, to = nrow(sampleDF),by = 1), size = n, replace = TRUE)
 
     
-    returnValues <- list(MFRI = krugerMAP_FRI_df[mfri_rows,]$MFRI, MAP_mm = krugerMAP_FRI_df[map_rows,]$MAP_mm)
+    returnValues <- list(MFRI = sampleDF[mfri_rows,]$MFRI, MAP_mm = sampleDF[map_rows,]$MAP_mm)
     
   }
   

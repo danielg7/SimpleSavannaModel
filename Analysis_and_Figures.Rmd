@@ -324,7 +324,7 @@ fig_EBP_density
 ```{r fig_GrowthMAP, echo=FALSE}
 dummyMAPDF <- data.frame(MAP = seq(400,900,1))
 
-  Growth <- predict.lm(object = growthModel, newdata = list(MAP = dummyMAPDF$MAP),interval = "confidence")
+Growth <- predict.lm(object = growthModel, newdata = list(MAP = dummyMAPDF$MAP),interval = "confidence")
 Growth <- tidy(Growth)
 Growth <- cbind(Growth,dummyMAPDF)
 
