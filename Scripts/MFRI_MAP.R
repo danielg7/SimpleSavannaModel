@@ -95,13 +95,13 @@ if(!file.exists("Data/krugerMAP_FRI_df.csv"))
 
 
 MFRI_MAP_binomial <- ggplot(data = krugerMAP_FRI_df, aes(x = MAP_mm, y = MFRI))+
-  geom_point(alpha = .5)+
+  geom_point(alpha = .25, color = "gray80")+
  # ylim(0,10)+
   #ylab("Fire Frequency (Fires / yr)")+
   xlab("Mean Annual Precipitation (mm)")+
   ylab("Mean Fire Return Interval (yr)")+
   cleanTheme+
-  stat_smooth(method="glm", family = "Gamma")
+  stat_smooth(method="glm", size = 1, family = "Gamma", color = "black")
  # geom_line(data = sr_MFRI_MAP_df, aes(x = MAP_mm, y = srpred))+
 #  geom_line(data = sr_MFRI_MAP_df, aes(x = MAP_mm, y = srpred_95))+
 #  geom_line(data = sr_MFRI_MAP_df, aes(x = MAP_mm, y = srpred_05))
@@ -175,8 +175,6 @@ mod.gamma <- mle2(minuslogl = gammaNLL, start = list(shape=3.1, scale=2), data =
 x <- seq(0:70)
 ygam <- dgamma(x, shape = 3.1, scale = 1.93, log = FALSE)
 
-hist(krugerMAP_FRI_df$MFRI,breaks=x)
-lines(x,ygam*N,type="l",col="red")
 
 # Now fit a gamma rainfall model
 gammaNLL.map <- function(k, MAP, a, b, c){
@@ -190,8 +188,10 @@ anova(mod.gamma,mod.gamma.map)
 # Generate some random data
 mod.map <- mle2(minuslogl = gammaNLL, start = list(shape=50, scale=11), data = list(k=krugerMAP_FRI_df$MAP_mm))
 
-sampleDF <- data.frame(MAP_mm = rgamma(10000, shape=50.6, scale=11),MFRI = NA)
-sampleDF$MFRI <- rgamma(10000, shape=-0.0048*sampleDF$MAP_mm + 5.97, scale=1.85)
+#sampleDF <- data.frame(MAP_mm = rgamma(10000, shape=50.6, scale=11),MFRI = NA)
+
+sampleDF <- data.frame(MAP_mm = rep.int(x = seq(400,900,by = 1),times = 100))
+sampleDF$MFRI <- rgamma(50100, shape=-0.0048*sampleDF$MAP_mm + 5.97, scale=1.85)
 
 # End Rico Code---
 

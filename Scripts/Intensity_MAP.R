@@ -69,7 +69,20 @@ historicalEBP <- subset(historicalEBP,Wind_ms >= 0 & Wind_ms <= 20)
 EBP_Intensity_by_Flat <- glm(PlotFI ~ 1, data = historicalEBP, family = Gamma(link = identity))
 EBP_Intensity_by_MAP <- glm(PlotFI ~ Rainfall_mm, data = historicalEBP, family = Gamma(link = identity))
 
+PlotFI_mean <- mean(historicalEBP$PlotFI)
+PlotFI_var <- var(historicalEBP$PlotFI)
+PlotFI_shape_est <- PlotFI_mean^2 / PlotFI_var
+PlotFI_scale_est <- PlotFI_var / PlotFI_mean 
 
+gammaNLL.map <- function(k, MAP, a, b, c){
+  -sum(dgamma(k, shape=a*MAP + b, scale=c, log=TRUE))
+}
+
+#fi.gamma.map <- mle2(minuslogl = gammaNLL.map, start = list(a=5.331918, b=0.3590828, c=1.5),data = list(k=historicalEBP$PlotFI, MAP=historicalEBP$Rainfall_mm))
+#anova(mod.gamma,mod.gamma.map)
+
+#sampleDF_FI <- data.frame(MAP_mm = rep.int(x = seq(400,900,by = 1),times = 100))
+#sampleDF_FI$MFRI <- rgamma(50100, shape=-coef(fi.gamma.map)[1]*sampleDF$MAP_mm + coef(fi.gamma.map)[2], scale=coef(fi.gamma.map)[3])
 
 Fxn_FireIntensity_RedoneHistoricalEBP <- function(MAP = numeric(0), Flat = FALSE){
   
