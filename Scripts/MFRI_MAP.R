@@ -46,7 +46,7 @@ library(MASS)
 
 cleanTheme <- ggthemes::theme_tufte() +
   ggplot2::theme(
-    text = ggplot2::element_text(family="sans",size=15),
+    text = ggplot2::element_text(family="Arial",size=15),
     axis.line = ggplot2::element_line(size = .5)
   )
 
@@ -93,19 +93,13 @@ if(!file.exists("Data/krugerMAP_FRI_df.csv"))
 # Plot relationship ----
 
 
-
+MAR_lab <- expression(paste("Mean Annual Rainfall (mm ","yr",{}^{-1},")"))
 MFRI_MAP_binomial <- ggplot(data = krugerMAP_FRI_df, aes(x = MAP_mm, y = MFRI))+
   geom_point(alpha = .25, color = "gray80")+
- # ylim(0,10)+
-  #ylab("Fire Frequency (Fires / yr)")+
-  xlab("Mean Annual Precipitation (mm)")+
+  xlab(MAR_lab)+
   ylab("Mean Fire Return Interval (yr)")+
   cleanTheme+
   stat_smooth(method="glm", size = 1, family = "Gamma", color = "black")
- # geom_line(data = sr_MFRI_MAP_df, aes(x = MAP_mm, y = srpred))+
-#  geom_line(data = sr_MFRI_MAP_df, aes(x = MAP_mm, y = srpred_95))+
-#  geom_line(data = sr_MFRI_MAP_df, aes(x = MAP_mm, y = srpred_05))
-
 MFRI_MAP_binomial
 
 # Model relationship ----

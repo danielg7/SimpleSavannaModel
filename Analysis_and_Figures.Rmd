@@ -19,7 +19,11 @@ library(broom)
 library(knitr)
 library(gridExtra)
 
-opts_chunk$set(warnings=FALSE, message=FALSE, comment=NA, fig.width=6, fig.height=6,fig.ext='png')
+opts_chunk$set(warnings=FALSE, message=FALSE, comment=NA, dpi=600, fig.ext='tiff',fig.width=6,fig.height=5)
+
+MAR_lab <- expression(paste("Mean Annual Rainfall (mm ","yr",{}^{-1},")"))
+intensity_lab <- expression(paste("Fire Intensity (kW ","m",{}^{-1},")"))
+
 ```
 
 # Model growth of stems
@@ -151,7 +155,7 @@ fig_EBP_density <- ggplot()+
   geom_density(data = FI_recover, fill = "gray50", alpha = .5, aes(x = PlotFI))+
   cleanTheme+
   ylab("Kernal density")+
-  xlab("Fire Intensity (kW / m)")+
+  xlab(intensity_lab)+
   facet_wrap(~RainfallFacet)+
   scale_y_continuous(labels = comma)
 fig_EBP_density
@@ -182,45 +186,50 @@ Growth_ribbon <- melt(Growth,measure.vars = c("lwr","upr","Mopane_upper","Mopane
 
 levels(Growth_wide$variable) <- c("Positive Growth Rate","Negative Growth Rate")
 
-fig_GrowthMAP <- ggplot()+
-  geom_line(data = Growth_wide, aes(x = MAP, y = value, linetype = variable))+
-  geom_ribbon(data = Growth, alpha = .5, aes(x = MAP, ymin = lwr, ymax = upr))+
-  geom_ribbon(data = Growth, alpha = .5,aes(x = MAP, ymin = Mopane_lower, ymax = Mopane_upper))+
-  geom_point(data = bothGrowth, size = 3, aes(x = MAP, y = Growth, shape = Type))+
-  scale_linetype_discrete(name="Growth Rate Predictions",
-                            breaks=c("Positive Growth Rate","Negative Growth Rate"),
-                            labels=c("Positive Growth Rate","Negative Growth Rate"))+
-      scale_shape_discrete(name ="Samples",
-                           breaks=c("Negative Growth Samples","Positive Growth Samples"),
-                           labels=c("Negative Growth Rate","Positive Growth Rate"))+
- # geom_line(data = Growth, size = 2, alpha = .5, linetype = "dashed", aes(x = MAP, y = Mopane_fit))+
-# ylim(20,75)+
-# xlim(400,1000)+
-  ylab("Growth Rate (cm / yr)")+
-  xlab("Mean Annual Precipitation (mm / yr)")+
+fig_MainGrowthMAP <- ggplot()+
   cleanTheme+
-  theme(legend.position="bottom",legend.direction="vertical")
-fig_GrowthMAP
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  ggtitle("A)")+
+  geom_line(data = Growth, aes(x = MAP, y = fit))+
+  geom_line(data = Growth, linetype="dashed", aes(x = MAP, y = upr))+
+  geom_line(data = Growth, linetype="dashed", aes(x = MAP, y = lwr))+
+  geom_point(data = MAP_growth, aes(x= MAP, y = Growth))+
 
+  #ylab(expression(Growth~Rate~(cm ~ yr^{-1})))+
+  #xlab(MAR_lab)+
+  xlab("")+
+  ylab("")+
+  ylim(30,100)+
+  xlim(250,1500)+
+  theme(legend.position="none",legend.direction="vertical")
+
+fig_MopaneGrowthMAP <- ggplot()+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  ggtitle("B)")+
+  xlab("")+
+  ylab("")+
+  ylim(30,100)+
+  xlim(250,1500)+
+  geom_line(data = Growth, aes(x = MAP, y = Mopane_fit))+
+  geom_line(data = Growth, linetype="dashed", aes(x = MAP, y = Mopane_upper))+
+  geom_line(data = Growth, linetype="dashed", aes(x = MAP, y = Mopane_lower))+
+  geom_point(data = COMO_growth, aes(x= MAP, y = Growth))
+  theme(legend.position="none",legend.direction="vertical")
+  
+GR_lab <- expression(paste("Growth Rate (cm ","yr",{}^{-1},")"))
+
+growthGrob <- arrangeGrob(fig_MainGrowthMAP,fig_MopaneGrowthMAP,nrow=1,left = textGrob(GR_lab, rot = 90, vjust = 1),sub = textGrob(MAR_lab, vjust = 0))
+
+growthGrob
+
+
+ggsave(plot = growthGrob, filename = "GR_fig.tiff",dpi = 100,width = 5,height = 3)
 ```
 
 
 
 ## Distribution of Heights by MAP
-
-```{r Fig_heightDistributions}
-# distributionsPlot <- ggplot(data=GrowthVaries_summary,aes(x=as.numeric(as.character(Height_Cuts))/100,y = Proportion, fill=as.factor(MAP_Cuts),group=MAP_Cuts))
-# distributionsPlot+
-#   cleanTheme+
-#   scale_fill_discrete("Mean Annual Precipitation (mm/yr)")+
-#   theme(text = element_text(size = 35),
-#         legend.background = element_rect(),
-#         legend.position="bottom")+
-#   guides(col = guide_legend(ncol = 4))+
-#   ylab("Proportion")+
-#   xlab("Height (m)")+
-#   geom_bar(stat="identity",binwidth=25, position="dodge")
-```
 
 ```{r}
 #glm_pEscape_null <- glm(data = na.omit(pEscape), pResult ~ 1, family = "binomial")
@@ -266,41 +275,118 @@ pEscape_pred$Type <- as.factor(pEscape_pred$Type)
 ## Probability of Escape by MAP
 
 ```{r Fig_pEscape, echo=FALSE}
-pEscape_pred_sub <- subset(pEscape_pred,Type =="Growth Negative with MAR" | Type == "Growth Flat with MAR" | Type == "Growth Positive with MAR")
+GrowthNeg_pEscape <- subset(pEscape_pred,Type == "Growth Negative with MAR")
+GrowthFlat_pEscape <- subset(pEscape_pred, Type == "Growth Flat with MAR")
+GrowthPositive_pEscape <- subset(pEscape_pred, Type == "Growth Positive with MAR")
 
-#pEscape_pred_sub_basic <- subset(pEscape_pred,Type == "Standard Model")
-#pEscape_pred_sub_basic <- rbind(pEscape_pred_sub_basic,pEscape_pred_sub)
-
-fig_pEscape <- ggplot(pEscape_pred_sub)+
- # geom_point(aes(x = MAP, y = fit, color = Type))+
- # ylim(0.7,1)+
-  geom_line(data = pEscape_pred_sub, size = 1.5, aes(x = MAP, y = fit, color = Type))+
-  scale_color_colorblind("Model Type")+
-  geom_ribbon(data = pEscape_pred_sub, alpha = .25, aes(x = MAP, ymax = upper.ci, ymin = lower.ci, factor = Type))+
-#  geom_line(linetype = "dashed", data = pEscape_pred_sub_basic, aes(x = MAP, y = lower.ci, color=Type))+
-  ylab("p(Escape, 3 m sapling)")+
-  xlab("Mean Annual Precipitation (mm/yr)")+
+fig_GrowthPositive_pEscape <- ggplot(GrowthPositive_pEscape)+
   cleanTheme+
-  theme(legend.position="none",legend.direction="vertical")+
-  facet_wrap(~Type)
-  #theme(legend.justification=c(1,1), legend.position=c(.98,.98))
-fig_pEscape
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = GrowthPositive_pEscape, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = GrowthPositive_pEscape, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = GrowthPositive_pEscape, aes(x = MAP, y = upper.ci))+
+ # ylab("p(Escape, 3 m sapling)")+
+  ylab("")+
+  #xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ggtitle("A)")
+
+fig_GrowthNeg_pEscape <- ggplot(GrowthNeg_pEscape)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = GrowthNeg_pEscape, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = GrowthNeg_pEscape, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = GrowthNeg_pEscape, aes(x = MAP, y = upper.ci))+
+ # ylab("p(Escape, 3 m sapling)")+
+  ylab("")+
+ # xlab("\nMean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ggtitle("B)")
+
+fig_GrowthFlat_pEscape <- ggplot(GrowthFlat_pEscape)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = GrowthFlat_pEscape, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = GrowthFlat_pEscape, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = GrowthFlat_pEscape, aes(x = MAP, y = upper.ci))+
+#  ylab("p(Escape, 3 m sapling)")+
+#  xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ylab("")+
+  ggtitle("C)")
+ 
+
+pEscapeGrob <- arrangeGrob(fig_GrowthPositive_pEscape,fig_GrowthNeg_pEscape,fig_GrowthFlat_pEscape,nrow=1,left = textGrob("p(Escape, 3 m sapling)", rot = 90, vjust = 1),sub = textGrob(MAR_lab, vjust = 0))
+
+pEscapeGrob
+
+
 ```
 
 ```{r Fig_pEscale_CompareMAR_Variation, echo=FALSE}
-pEscape_pred_subVar <- subset(pEscape_pred, Type == "Standard Model" | Type == "Only MFRI Varies with MAR" | Type == "Only Intensity Varies with MAR" | Type == "Only Growth Varies with MAR")
-fig_pEscape_All <- ggplot(pEscape_pred_subVar)+
- # geom_point(aes(x = MAP, y = fit, color = Type))+
-  geom_line(data = pEscape_pred_subVar, size = 1.5, aes(x = MAP, y = fit, color = Type))+
-  geom_ribbon(data = pEscape_pred_subVar, alpha = .25, aes(x = MAP, ymax = upper.ci, ymin = lower.ci, factor = Type))+
-  scale_color_colorblind("Model Type")+
-  ylab("p(Escape, 3 m sapling)")+
-  xlab("Mean Annual Precipitation (mm/yr)")+
+#pEscape_pred_subVar <- subset(pEscape_pred, Type == "Standard Model" | Type == "Only MFRI Varies with MAR" | Type == "Only Intensity Varies with MAR" | Type == "Only Growth Varies with MAR")
+
+pEscape_Standard <- subset(pEscape_pred, Type == "Standard Model")
+pEscape_MFRIVaries <- subset(pEscape_pred, Type == "Only MFRI Varies with MAR")
+pEscape_IntensityVaries <- subset(pEscape_pred, Type == "Only Intensity Varies with MAR")
+pEscape_GrowthVaries <- subset(pEscape_pred, Type == "Only Growth Varies with MAR")
+
+fig_pEscape_Standard <- ggplot(pEscape_Standard)+
   cleanTheme+
-  theme(legend.position="none",legend.direction="vertical")+
-  facet_wrap(~Type)
-  #theme(legend.justification=c(1,1), legend.position=c(.98,.98))
-fig_pEscape_All
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = pEscape_Standard, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_Standard, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_Standard, aes(x = MAP, y = upper.ci))+
+  #ylab("p(Escape, 3 m sapling)")+
+  #xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ylab("")+
+  ggtitle("A)")
+
+fig_pEscape_MFRIVaries <- ggplot(pEscape_MFRIVaries)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = pEscape_MFRIVaries, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_MFRIVaries, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_MFRIVaries, aes(x = MAP, y = upper.ci))+
+ # ylab("p(Escape, 3 m sapling)")+
+  ylab("")+
+  xlab("\n")+
+ # xlab("\nMean Annual Precipitation (mm/yr)")+
+  ggtitle("B)")
+
+fig_pEscape_IntensityVaries <- ggplot(pEscape_IntensityVaries)+
+  cleanTheme+
+  ylim(0.5,1)+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = pEscape_IntensityVaries, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_IntensityVaries, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_IntensityVaries, aes(x = MAP, y = upper.ci))+
+#  ylab("p(Escape, 3 m sapling)")+
+#  xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ylab("")+
+  ggtitle("C)")
+
+fig_pEscape_GrowthVaries <- ggplot(pEscape_IntensityVaries)+
+  cleanTheme+
+  ylim(0.5,1)+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = pEscape_GrowthVaries, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_GrowthVaries, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_GrowthVaries, aes(x = MAP, y = upper.ci))+
+#  ylab("p(Escape, 3 m sapling)")+
+#  xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ylab("")+
+  ggtitle("D)")
+ 
+
+compareGrowth <- arrangeGrob(fig_pEscape_Standard,fig_pEscape_MFRIVaries,fig_pEscape_IntensityVaries,fig_pEscape_GrowthVaries,nrow=2,ncol=2,left = textGrob("p(Escape, 3 m sapling)", rot = 90, vjust = 1),sub = textGrob(MAR_lab, vjust = 0))
+
+compareGrowth
+
+ggsave(plot = compareGrowth, filename = "compareGrowth.eps",dpi = 200,width = 6,height = 6)
 ```
 
 ```{r whatControlsWhat_dataPrep}
@@ -338,7 +424,11 @@ fig_IntensityFlat <- ggplot(pEscape_wide)+
   ylab("Standard Model Predictions")+
   cleanTheme
 
-grid.arrange(fig_GrowthFlat,fig_MFRIFlat,fig_IntensityFlat,nrow=1)
+figGrowthCompare <- arrangeGrob(fig_GrowthFlat,fig_MFRIFlat,fig_IntensityFlat,nrow=1)
+
+figGrowthCompare
+
+ggsave(plot = figGrowthCompare, filename = "sensitivity.tiff",dpi = 100,width = 11,height = 4)
 
 ```
 
