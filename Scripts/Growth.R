@@ -49,7 +49,7 @@ COMO_growth <- structure(list(Growth = structure(c(0.0744476658720873, 0.0631190
 MAP = c(564, 780, 654, 825, 504, 750)), .Names = c("Growth", 
                                                    "MAP"), row.names = c(NA, -6L), class = "data.frame")
 
-COMO_growth$Growth <- COMO_growth$Growth*1000
+COMO_growth$Growth <- COMO_growth$Growth*100
 
 COMO_growthModel <- lm(Growth ~ MAP, data = COMO_growth)
 

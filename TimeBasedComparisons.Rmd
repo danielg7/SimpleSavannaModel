@@ -1,0 +1,185 @@
+---
+title: "Simple Savanna"
+author: "Daniel S. Godwin"
+output:
+  html_document:
+    keep_md: true
+    theme: journal
+    fig_caption: true
+    fig.path: 'figure_rmd/'
+---
+```{r echo=FALSE}
+
+library(scales)
+library(stargazer)
+library(ggplot2)
+library(plyr)
+library(reshape2)
+library(broom)
+library(knitr)
+library(gridExtra)
+
+opts_chunk$set(warnings=FALSE, message=FALSE, comment=NA, dpi=600, fig.ext='tiff',fig.width=6,fig.height=5)
+
+MAR_lab <- expression(paste("Mean Annual Rainfall (mm ","yr",{}^{-1},")"))
+intensity_lab <- expression(paste("Fire Intensity (kW ","m",{}^{-1},")"))
+
+```
+
+# Model growth of stems
+
+
+```{r Model, echo=TRUE}
+source("Scripts/Model.R")
+
+Runs <- 5000
+Trees <- 500
+
+All_25 <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = 25,
+                                          GrowthFlat = "Positive",
+                                          IntensityFlat = FALSE,
+                                          FireFrequencyFlat = FALSE,
+                                          FileName = "All")
+
+All_50 <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = 50,
+                                          GrowthFlat = "Positive",
+                                          IntensityFlat = FALSE,
+                                          FireFrequencyFlat = FALSE,
+                                          FileName = "All")
+
+All_75 <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = 70,
+                                          GrowthFlat = "Positive",
+                                          IntensityFlat = FALSE,
+                                          FireFrequencyFlat = FALSE,
+                                          FileName = "All")
+
+All_100 <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = 100,
+                                          GrowthFlat = "Positive",
+                                          IntensityFlat = FALSE,
+                                          FireFrequencyFlat = FALSE,
+                                          FileName = "All")
+
+MAP_low <- 400
+MAP_high <- 900
+MAP_seq <- 50
+
+All_25_summary <- Summary_TreeHeights(All_25,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+All_50_summary <- Summary_TreeHeights(All_50,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+All_75_summary <- Summary_TreeHeights(All_75,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+All_100_summary <- Summary_TreeHeights(All_100,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+
+
+pEscape_All_25 <- Summary_pEscape(All_25,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+pEscape_All_50 <- Summary_pEscape(All_50,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+pEscape_All_75 <- Summary_pEscape(All_75,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+pEscape_All_100 <- Summary_pEscape(GrowthNegative,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+
+
+```
+
+
+
+```{r}
+Fxn_pEscape_pred <- function(df){
+  dummyMAPDF <- data.frame(MAP = seq(400,900,10))
+  
+  glm_pEscape_MAP <- glm(data = na.omit(df), pResult ~ MAP_Cuts, family = "quasibinomial")
+
+  pEscape_pred <- predict.glm(object = glm_pEscape_MAP, type = "link", newdata = list(MAP_Cuts = dummyMAPDF$MAP),se.fit = TRUE)
+  pEscape_pred <- tidy(pEscape_pred)
+  pEscape_pred <- cbind(pEscape_pred,dummyMAPDF)
+
+  pEscape_pred$upper.ci <- plogis(pEscape_pred$fit+(1.96 * (pEscape_pred$se.fit)))
+  pEscape_pred$lower.ci <- plogis(pEscape_pred$fit-(1.96 * (pEscape_pred$se.fit)))
+
+  pEscape_pred$fit <- inv.logit(pEscape_pred$fit)
+  
+  return(pEscape_pred)
+}
+
+pEscape_pred_All_25 <- Fxn_pEscape_pred(pEscape_All_25)
+pEscape_pred_All_50 <- Fxn_pEscape_pred(pEscape_All_50)
+pEscape_pred_All_75 <- Fxn_pEscape_pred(pEscape_All_75)
+pEscape_pred_All_100 <- Fxn_pEscape_pred(pEscape_All_100)
+
+pEscape_pred_All_25$Years <- 25
+pEscape_pred_All_75$Years <- 75
+pEscape_pred_All_50$Years <- 50
+pEscape_pred_All_100$Years <- 100
+
+
+pEscape_pred <- rbind.data.frame(pEscape_pred_All_25,pEscape_pred_All_50,pEscape_pred_All_75,pEscape_pred_All_100)
+
+#pEscape_pred$Years <- as.factor(as.character(pEscape_pred$Years))
+
+```
+
+## Probability of Escape by MAP
+
+```{r Fig_pEscape, echo=FALSE}
+fig_Growth25 <- ggplot(pEscape_pred_All_25)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = pEscape_pred_All_25, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_pred_All_25, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_pred_All_25, aes(x = MAP, y = upper.ci))+
+ # ylab("p(Escape, 3 m sapling)")+
+  ylab("")+
+  #xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ggtitle("A)")
+
+fig_Growth50 <- ggplot(pEscape_pred_All_50)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = pEscape_pred_All_50, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_pred_All_50, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_pred_All_50, aes(x = MAP, y = upper.ci))+
+ # ylab("p(Escape, 3 m sapling)")+
+  ylab("")+
+ # xlab("\nMean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ggtitle("B)")
+
+fig_Growth75 <- ggplot(pEscape_pred_All_75)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = pEscape_pred_All_75, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_pred_All_75, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_pred_All_75, aes(x = MAP, y = upper.ci))+
+#  ylab("p(Escape, 3 m sapling)")+
+#  xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ylab("")+
+  ggtitle("C)")
+ 
+fig_Growth100 <- ggplot(pEscape_pred_All_100)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = pEscape_pred_All_100, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_pred_All_100, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_pred_All_100, aes(x = MAP, y = upper.ci))+
+#  ylab("p(Escape, 3 m sapling)")+
+#  xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ylab("")+
+  ggtitle("D)")
+
+pEscapeGrob <- arrangeGrob(fig_Growth25,fig_Growth50,fig_Growth75,fig_Growth100,nrow=2,left = textGrob("p(Escape, 3 m sapling)", rot = 90, vjust = 1),sub = textGrob(MAR_lab, vjust = 0))
+
+pEscapeGrob
+
+fig_All <- ggplot(pEscape_pred)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  ylab("p(Escape, 3 m sapling")+
+  scale_color_colorblind("Number of Model Timesteps (Years)")+
+  geom_line(data = pEscape_pred, size = 1.5, aes(x = MAP, y = fit, color = as.factor(Years)))
+  #geom_line(linetype = "dashed", data = pEscape_pred, aes(x = MAP, y = lower.ci, color = Years))+
+  #geom_line(linetype = "dashed", data = pEscape_pred, aes(x = MAP, y = upper.ci, color = Years))
+fig_All
+
+ggsave(plot = fig_All, filename = "compareYears.tiff",dpi = 100,width = 6,height = 4)
+
+```
+

@@ -42,5 +42,5 @@ for(m in unique(meta$Species)){
 }
 
 COMO_subset <- subset(meta,Species=="Colophospermum mopane")
-COMO_subset$Height <- predict(object = COMO_nls,newdata = list(Diameter = COMO_subset$Average_Diameter_Increment))
+COMO_subset$Height <- predict(object = COMO_nls,newdata = list(Diameter_mm = COMO_subset$Average_Diameter_Increment/10))
 COMO_growth <- data.frame(Growth = COMO_subset$Height,MAP=COMO_subset$MAP)

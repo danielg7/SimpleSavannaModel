@@ -287,12 +287,14 @@ fig_GrowthPositive_pEscape <- ggplot(GrowthPositive_pEscape)+
   geom_line(linetype = "dashed", data = GrowthPositive_pEscape, aes(x = MAP, y = upper.ci))+
  # ylab("p(Escape, 3 m sapling)")+
   ylab("")+
+   ylim(0,1)+
   #xlab("Mean Annual Precipitation (mm/yr)")+
   xlab("\n")+
   ggtitle("A)")
 
 fig_GrowthNeg_pEscape <- ggplot(GrowthNeg_pEscape)+
   cleanTheme+
+  ylim(0,1)+
   theme(plot.title = element_text(size = 12, hjust=0))+
   geom_line(data = GrowthNeg_pEscape, size = 1.5, aes(x = MAP, y = fit))+
   geom_line(linetype = "dashed", data = GrowthNeg_pEscape, aes(x = MAP, y = lower.ci))+
@@ -305,6 +307,7 @@ fig_GrowthNeg_pEscape <- ggplot(GrowthNeg_pEscape)+
 
 fig_GrowthFlat_pEscape <- ggplot(GrowthFlat_pEscape)+
   cleanTheme+
+   ylim(0,1)+
   theme(plot.title = element_text(size = 12, hjust=0))+
   geom_line(data = GrowthFlat_pEscape, size = 1.5, aes(x = MAP, y = fit))+
   geom_line(linetype = "dashed", data = GrowthFlat_pEscape, aes(x = MAP, y = lower.ci))+
@@ -402,8 +405,8 @@ fig_GrowthFlat <- ggplot(pEscape_wide)+
   xlim(.85,1)+
   geom_line(colour="gray50",aes(x = Standard, y = Standard))+
   geom_line(linetype = "dashed", aes(x = GrowthVaries, y = Standard))+
-  xlab("Model Predictions:\nOnly Growth Varies with MAR")+
-  ylab("Standard Model Predictions")+
+  xlab("Probability of Escape Predictions:\nOnly Growth Varies with MAR")+
+  ylab("Standard Probability of Escape Predictions")+
   cleanTheme
 
 fig_MFRIFlat <- ggplot(pEscape_wide)+
@@ -411,8 +414,8 @@ fig_MFRIFlat <- ggplot(pEscape_wide)+
   xlim(.85,1)+
   geom_line(colour="gray50",aes(x = Standard, y = Standard))+
   geom_line(linetype = "dashed", aes(x = MFRIFlat, y = Standard))+
-  xlab("Model Predictions:\nOnly MFRI Varies with MAR")+
-  ylab("Standard Model Predictions")+
+  xlab("Probability of Escape Predictions:\nOnly MFRI Varies with MAR")+
+  ylab("Standard Probability of Escape Predictions")+
   cleanTheme
 
 fig_IntensityFlat <- ggplot(pEscape_wide)+
@@ -420,8 +423,8 @@ fig_IntensityFlat <- ggplot(pEscape_wide)+
   ylim(.85,1)+
   geom_line(colour="gray50",aes(x = Standard, y = Standard))+
   geom_line(linetype = "dashed", aes(x = IntensityFlat, y = Standard))+
-  xlab("Model Predictions:\nOnly Intensity Varies with MAR")+
-  ylab("Standard Model Predictions")+
+  xlab("Probability of Escape Predictions:\nOnly Intensity Varies with MAR")+
+  ylab("Standard Probability of Escape Predictions")+
   cleanTheme
 
 figGrowthCompare <- arrangeGrob(fig_GrowthFlat,fig_MFRIFlat,fig_IntensityFlat,nrow=1)
