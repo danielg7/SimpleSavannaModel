@@ -130,13 +130,15 @@ EBP_Intensity_by_MAP_pred$Published <- Fxn_FireIntensity_Original(EBP_Intensity_
 
 fig_EBP_Intensity_by_MAP <- ggplot(data = EBP_Intensity_by_MAP_pred, aes(x = Rainfall_mm, y = fit))+
   geom_boxplot(data = original, aes(x = Rainfall_mm, y = PlotFI, group = Rainfall_mm),position = "dodge")+
+  cleanTheme+
   geom_line(color = "black")+
-  geom_line(color = "red", aes( x = Rainfall_mm, y = Published))+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  ggtitle("A)")+
+ # geom_line(color = "red", aes( x = Rainfall_mm, y = Published))+
   geom_line(linetype = "dashed", aes(x = Rainfall_mm, y = upper.ci))+
   geom_line(linetype = "dashed", aes(x = Rainfall_mm, y = EBP_Intensity_by_MAP_pred$lower.ci))+
-  ylab("Intensity (kW / m^2)")+
-  xlab("Mean Annual Precipitation (mm)")+
-  cleanTheme
+  ylab(intensity_lab)+
+  xlab("")
 fig_EBP_Intensity_by_MAP
 
 
@@ -164,6 +166,28 @@ fig_EBP_density
 
 ```
 
+```{r fig_MFRI_MAP_binomial}
+
+MAR_lab <- expression(paste("Mean Annual Rainfall (mm ","yr",{}^{-1},")"))
+MFRI_MAP_binomial <- ggplot(data = krugerMAP_FRI_df, aes(x = MAP_mm, y = MFRI))+
+  cleanTheme+
+  geom_point(alpha = .25, color = "gray80")+
+  xlab("")+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  ggtitle("B)")+
+  ylab("Mean Fire Return Interval (yr)")+
+  stat_smooth(method="glm", size = 1, family = "Gamma", color = "black",se = TRUE)
+MFRI_MAP_binomial
+
+
+```
+
+```{r}
+bothExampleGrob <- arrangeGrob(nrow=1,fig_EBP_Intensity_by_MAP,MFRI_MAP_binomial,sub = textGrob(MAR_lab, vjust = 0))
+bothExampleGrob
+
+ggsave(plot=bothExampleGrob,"Intensity_Frequency_MAR.tiff",dpi=200,width=8,height=4)
+```
 ## Growth by MAP
 
 ```{r fig_GrowthMAP, echo=FALSE}
@@ -270,6 +294,8 @@ pEscape_pred <- rbind.data.frame(pEscape_pred_All,pEscape_pred_GrowthFlat,pEscap
 
 pEscape_pred$Type <- as.factor(pEscape_pred$Type)
 
+
+
 ```
 
 ## Probability of Escape by MAP
@@ -322,6 +348,9 @@ fig_GrowthFlat_pEscape <- ggplot(GrowthFlat_pEscape)+
 pEscapeGrob <- arrangeGrob(fig_GrowthPositive_pEscape,fig_GrowthNeg_pEscape,fig_GrowthFlat_pEscape,nrow=1,left = textGrob("p(Escape, 3 m sapling)", rot = 90, vjust = 1),sub = textGrob(MAR_lab, vjust = 0))
 
 pEscapeGrob
+
+ggsave(plot = pEscapeGrob, filename = "pEscape_varied_growth.eps",dpi = 400,width = 10,height = 4)
+
 
 
 ```

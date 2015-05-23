@@ -47,7 +47,7 @@ All_50 <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL 
                                           FireFrequencyFlat = FALSE,
                                           FileName = "All")
 
-All_75 <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = 70,
+All_75 <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = 75,
                                           GrowthFlat = "Positive",
                                           IntensityFlat = FALSE,
                                           FireFrequencyFlat = FALSE,
@@ -72,7 +72,7 @@ All_100_summary <- Summary_TreeHeights(All_100,MAP_low = MAP_low, MAP_high = MAP
 pEscape_All_25 <- Summary_pEscape(All_25,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 pEscape_All_50 <- Summary_pEscape(All_50,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 pEscape_All_75 <- Summary_pEscape(All_75,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
-pEscape_All_100 <- Summary_pEscape(GrowthNegative,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+pEscape_All_100 <- Summary_pEscape(All_100,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 
 
 ```

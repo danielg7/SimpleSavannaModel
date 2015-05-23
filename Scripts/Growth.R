@@ -34,7 +34,6 @@
 
 # Establish function relating growth to MAP
 
-height_max <- 600 / 100 # 600 cm as defined in Higgins et al. 2000 per Shackleton 1997
 
 MAP_growth <- data.frame(MAP = c(300,600,1000,1400), Growth = c(35,45,60,80))
 growthModel <- lm(Growth ~ MAP, data = MAP_growth) # Add sampling from CI for growth data.
@@ -61,10 +60,11 @@ bothGrowth$Type <- as.factor(bothGrowth$Type)
 
 flatGrowth <- seq(from = min(bothGrowth$Growth), to = max(bothGrowth$Growth), by = .01)
 
-treeGrowth <- function(height_previous = numeric(0), MAP = numeric(0), Type = "Positive")
+treeGrowth <- function(height_previous = numeric(0), MAP = numeric(0), Type = "Positive", hMax = 600)
 {
+  height_max <- hMax / 100 # hMax of tree growth. 600 cm as defined in Higgins et al. 2000 per Shackleton 1997. Converts it to m for later topkill issues.
   
-  if(Type == "Positive"){
+    if(Type == "Positive"){
   growthRate <- predict.lm(object = growthModel, newdata = list(MAP = MAP),interval = "prediction")
   growthRate <- tidy(growthRate)
   

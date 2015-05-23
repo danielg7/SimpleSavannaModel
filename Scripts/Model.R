@@ -34,7 +34,7 @@
 # 
 # Load required packages ----
 
-Fxn_IntegrativeSavannaTopkillModel <- function(Runs_Set = 1000, Trees = 100, TL = 50, GrowthFlat = "Positive", IntensityFlat = FALSE, FireFrequencyFlat = FALSE, FileName = NA)
+Fxn_IntegrativeSavannaTopkillModel <- function(Runs_Set = 1000, Trees = 100, TL = 50, GrowthFlat = "Positive", IntensityFlat = FALSE, FireFrequencyFlat = FALSE, FileName = NA, treeHeightMax = 600)
 {
   pb <- txtProgressBar(min = 0, max = Runs_Set, style = 3)
   
@@ -93,7 +93,7 @@ for(u in 1:Runs){
   for(timeSkip in 1:timeLimit){
     
     
-    Tree_vector_height <- treeGrowth(height_previous = Tree_vector_height, MAP = MAP_seed,Type = GrowthFlat)
+    Tree_vector_height <- treeGrowth(height_previous = Tree_vector_height, MAP = MAP_seed,Type = GrowthFlat, hMax = treeHeightMax)
     
     
     burnTest <- rbinom(n = 1,
