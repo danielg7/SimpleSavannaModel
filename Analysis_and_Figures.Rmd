@@ -13,16 +13,25 @@ output:
 library(scales)
 library(stargazer)
 library(ggplot2)
+library(visreg)
 library(plyr)
 library(reshape2)
 library(broom)
 library(knitr)
 library(gridExtra)
 
+ggsave <- ggplot2::ggsave; body(ggsave) <- body(ggplot2::ggsave)[-2]
+
 opts_chunk$set(warnings=FALSE, message=FALSE, comment=NA, dpi=600, fig.ext='tiff',fig.width=6,fig.height=5)
 
-MAR_lab <- expression(paste("Mean Annual Rainfall (mm ","yr",{}^{-1},")"))
+MAR_lab <- expression(paste("Mean Annual Precipitation (mm ","yr",{}^{-1},")"))
 intensity_lab <- expression(paste("Fire Intensity (kW ","m",{}^{-1},")"))
+
+cleanTheme <- ggthemes::theme_tufte() +
+  ggplot2::theme(
+    text = ggplot2::element_text(size=15,family="Arial"),
+    axis.line = ggplot2::element_line(size = .5)
+  )
 
 ```
 
@@ -30,14 +39,22 @@ intensity_lab <- expression(paste("Fire Intensity (kW ","m",{}^{-1},")"))
 
 
 ```{r Model, echo=TRUE}
+source("Scripts/AverageLocationGrowth.R")
 source("Scripts/Model.R")
+source("Scripts/SummaryFunctions.R")
 
 Runs <- 5000
 Trees <- 500
-TL <- 50
+TL <- 100
 
-All <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
-                                          GrowthFlat = "Positive",
+#PTEANG_Growth_All <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
+#                                          GrowthSpecies = "PTEANG",
+#                                          IntensityFlat = FALSE,
+#                                          FireFrequencyFlat = FALSE,
+#                                          FileName = "All")
+
+TERSER_Growth_All <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
+                                          GrowthSpecies = "TERSER",
                                           IntensityFlat = FALSE,
                                           FireFrequencyFlat = FALSE,
                                           FileName = "All")
@@ -45,57 +62,109 @@ All <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = T
 GrowthFlat <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
                                                  IntensityFlat = FALSE,
                                                  FireFrequencyFlat = FALSE,
-                                                 GrowthFlat = "Flat",
+                                                 GrowthSpecies = "Flat",
                                                  FileName = "GrowthFlat")
 
 GrowthPositive <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
                                                      IntensityFlat = FALSE,
                                                      FireFrequencyFlat = FALSE,
-                                                     GrowthFlat = "Positive",
+                                                     GrowthSpecies = "TERSER",
                                                      FileName = "GrowthPositive")
 
 GrowthNegative <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
                                                     IntensityFlat = FALSE,
                                                     FireFrequencyFlat = FALSE,
-                                                    GrowthFlat = "Negative",
+                                                    GrowthSpecies = "Negative",
                                                     FileName = "NegativeGrowth")
 
 GrowthVaries <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
-                                                    GrowthFlat = "Positive",
+                                                    GrowthSpecies = "TERSER",
                                                     FireFrequencyFlat = TRUE,
                                                     IntensityFlat = TRUE,
                                                     FileName = "GrowthVaries")
 
+GrowthVaries_PTAN <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
+                                                    GrowthSpecies = "PTEANG",
+                                                    FireFrequencyFlat = TRUE,
+                                                    IntensityFlat = TRUE,
+                                                    FileName = "GrowthVaries")
+
+GrowthVaries_COMO <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
+                                                    GrowthSpecies = "Negative",
+                                                    FireFrequencyFlat = TRUE,
+                                                    IntensityFlat = TRUE,
+                                                    FileName = "GrowthVaries")
+
+GrowthVaries_Average <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
+                                                    GrowthSpecies = "Average",
+                                                    FireFrequencyFlat = TRUE,
+                                                    IntensityFlat = TRUE,
+                                                    FileName = "GrowthAverage")
 
 
 IntensityVaries <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
-                                                    GrowthFlat = "Flat",
+                                                    GrowthSpecies = "Flat",
                                                     FireFrequencyFlat = TRUE,
                                                     IntensityFlat = FALSE,
                                                     FileName = "IntensityVaries")
 
 MFRIVaries <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
-                                               GrowthFlat = "Flat",
+                                               GrowthSpecies = "Flat",
                                                IntensityFlat = TRUE,
                                                FireFrequencyFlat = FALSE, FileName = "MFRIVaries")
+
+Average_Growth_All <- Fxn_IntegrativeSavannaTopkillModel(Runs_Set = Runs, Trees = Trees, TL = TL,
+                                          GrowthSpecies = "Average",
+                                          IntensityFlat = FALSE,
+                                          FireFrequencyFlat = FALSE,
+                                          FileName = "Average")
+
+
 
 MAP_low <- 400
 MAP_high <- 900
 MAP_seq <- 50
 
-All_summary <- Summary_TreeHeights(All,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+PTEANG_Growth_All_Summary <- Summary_TreeHeights(PTEANG_Growth_All,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+TERSER_Growth_All_Summary <- Summary_TreeHeights(TERSER_Growth_All,
+                                                 MAP_low = MAP_low,
+                                                 MAP_high = MAP_high,
+                                                 MAP_sequence = MAP_seq)
+
 GrowthFlat_summary <- Summary_TreeHeights(GrowthFlat,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+
 GrowthPositive_summary <- Summary_TreeHeights(GrowthPositive,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 GrowthNegative_summary <- Summary_TreeHeights(GrowthNegative,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 GrowthVaries_summary <- Summary_TreeHeights(GrowthVaries,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+GrowthVaries_PTAN_summary <- Summary_TreeHeights(GrowthVaries_PTAN,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+GrowthVaries_COMO_summary <- Summary_TreeHeights(GrowthVaries_COMO,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+Average_Growth_All_summary <- Summary_TreeHeights(Average_Growth_All,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq) 
+GrowthVaries_Average_Summary <- Summary_TreeHeights(GrowthVaries_Average,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq) 
+
+
+
 IntensityVaries_summary <- Summary_TreeHeights(IntensityVaries,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 MFRIVaries_summary <- Summary_TreeHeights(MFRIVaries,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 
-pEscape_All <- Summary_pEscape(All,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+pEscape_PTEANG <- Summary_pEscape(PTEANG_Growth_All,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+pEscape_TERSER <- Summary_pEscape(TERSER_Growth_All,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+
 pEscape_GrowthFlat <- Summary_pEscape(GrowthFlat,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 pEscape_GrowthPositive <- Summary_pEscape(GrowthPositive,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 pEscape_GrowthNegative <- Summary_pEscape(GrowthNegative,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 pEscape_GrowthVaries <- Summary_pEscape(GrowthVaries,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+pEscape_GrowthVaries_COMO <- Summary_pEscape(GrowthVaries_COMO,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+
+pEscape_GrowthVaries_PTAN <- Summary_pEscape(GrowthVaries_PTAN,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+pEscape_Average <- Summary_pEscape(Average_Growth_All,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+
+pEscape_GrowthVaries_Average <- Summary_pEscape(GrowthVaries_Average,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
+
+
+
+
+
+
 pEscape_IntensityVaries <- Summary_pEscape(IntensityVaries,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 pEscape_MFRIVaries <- Summary_pEscape(MFRIVaries,MAP_low = MAP_low, MAP_high = MAP_high, MAP_sequence = MAP_seq)
 
@@ -104,156 +173,7 @@ pEscape_MFRIVaries <- Summary_pEscape(MFRIVaries,MAP_low = MAP_low, MAP_high = M
 
 ```
 
-```{r fig_FIMAP, echo=FALSE}
-FI_recover <- data.frame(MAP = numeric(0),PlotFI=numeric(0))
-
-FI_recover <- rbind(FI_recover,data.frame(Rainfall_mm = rep.int(x = 496,times = 229),PlotFI=NA))
-FI_recover <- rbind(FI_recover,data.frame(Rainfall_mm = rep.int(x = 544,times = 342),PlotFI=NA))
-FI_recover <- rbind(FI_recover,data.frame(Rainfall_mm = rep.int(x = 550,times = 306),PlotFI=NA))
-FI_recover <- rbind(FI_recover,data.frame(Rainfall_mm = rep.int(x = 737,times = 360),PlotFI=NA))
-FI_recover$PlotFI <- Fxn_FireIntensity_RedoneHistoricalEBP(MAP = FI_recover$Rainfall_mm)
-FI_recover$Type <- "Simulated"
-original <- historicalEBP[c("Rainfall_mm","PlotFI")]
-original$Type <- "Original"
-compareFI <- rbind(FI_recover,original)
-
-MAP_pred <- data.frame(Rainfall_mm = seq(400,900,1))
-EBP_Intensity_by_MAP_pred <- predict.glm(object = EBP_Intensity_by_MAP, type = "link", newdata = MAP_pred,se.fit = TRUE)
-EBP_Intensity_by_MAP_pred <- tidy(EBP_Intensity_by_MAP_pred)
-EBP_Intensity_by_MAP_pred <- cbind(MAP_pred,EBP_Intensity_by_MAP_pred)
-
-EBP_Intensity_by_MAP_pred$upper.ci <- EBP_Intensity_by_MAP_pred$fit+(1.96 * (EBP_Intensity_by_MAP_pred$se.fit))
-EBP_Intensity_by_MAP_pred$lower.ci <- EBP_Intensity_by_MAP_pred$fit-(1.96 * (EBP_Intensity_by_MAP_pred$se.fit))
-EBP_Intensity_by_MAP_pred$fit <- EBP_Intensity_by_MAP_pred$fit
-
-EBP_Intensity_by_MAP_pred$Published <- Fxn_FireIntensity_Original(EBP_Intensity_by_MAP_pred$Rainfall_mm)
-
-fig_EBP_Intensity_by_MAP <- ggplot(data = EBP_Intensity_by_MAP_pred, aes(x = Rainfall_mm, y = fit))+
-  geom_boxplot(data = original, aes(x = Rainfall_mm, y = PlotFI, group = Rainfall_mm),position = "dodge")+
-  cleanTheme+
-  geom_line(color = "black")+
-  theme(plot.title = element_text(size = 12, hjust=0))+
-  ggtitle("A)")+
- # geom_line(color = "red", aes( x = Rainfall_mm, y = Published))+
-  geom_line(linetype = "dashed", aes(x = Rainfall_mm, y = upper.ci))+
-  geom_line(linetype = "dashed", aes(x = Rainfall_mm, y = EBP_Intensity_by_MAP_pred$lower.ci))+
-  ylab(intensity_lab)+
-  xlab("")
-fig_EBP_Intensity_by_MAP
-
-
-original$RainfallFacet <- as.factor(as.character(original$Rainfall_mm))
-
-levels(original$RainfallFacet ) <- c("496 mm / yr","544 mm / yr", "550 mm / yr","737 mm / yr")
-
-FI_recover$RainfallFacet <- as.factor(as.character(FI_recover$Rainfall_mm))
-
-levels(FI_recover$RainfallFacet ) <- c("496 mm / yr","544 mm / yr", "550 mm / yr","737 mm / yr")
-
-
-
-fig_EBP_density <- ggplot()+
-  geom_histogram(data = original, binwidth = 500, fill = "white", color = "black", aes(x = PlotFI, y=..density..))+
-  geom_density(data = FI_recover, fill = "gray50", alpha = .5, aes(x = PlotFI))+
-  cleanTheme+
-  ylab("Kernal density")+
-  xlab(intensity_lab)+
-  facet_wrap(~RainfallFacet)+
-  scale_y_continuous(labels = comma)
-fig_EBP_density
-
-
-
-```
-
-```{r fig_MFRI_MAP_binomial}
-
-MAR_lab <- expression(paste("Mean Annual Rainfall (mm ","yr",{}^{-1},")"))
-MFRI_MAP_binomial <- ggplot(data = krugerMAP_FRI_df, aes(x = MAP_mm, y = MFRI))+
-  cleanTheme+
-  geom_point(alpha = .25, color = "gray80")+
-  xlab("")+
-  theme(plot.title = element_text(size = 12, hjust=0))+
-  ggtitle("B)")+
-  ylab("Mean Fire Return Interval (yr)")+
-  stat_smooth(method="glm", size = 1, family = "Gamma", color = "black",se = TRUE)
-MFRI_MAP_binomial
-
-
-```
-
-```{r}
-bothExampleGrob <- arrangeGrob(nrow=1,fig_EBP_Intensity_by_MAP,MFRI_MAP_binomial,sub = textGrob(MAR_lab, vjust = 0))
-bothExampleGrob
-
-ggsave(plot=bothExampleGrob,"Intensity_Frequency_MAR.tiff",dpi=200,width=8,height=4)
-```
 ## Growth by MAP
-
-```{r fig_GrowthMAP, echo=FALSE}
-source("Scripts/Growth.R")
-
-dummyMAPDF <- data.frame(MAP = seq(400,900,1))
-
-Growth <- predict.lm(object = growthModel, newdata = list(MAP = dummyMAPDF$MAP),interval = "confidence")
-Growth_Mopane <- predict.lm(object = COMO_growthModel, newdata = list(MAP = dummyMAPDF$MAP),interval = "confidence")
-Growth_Mopane<- tidy(Growth_Mopane)
-names(Growth_Mopane) <- c("Mopane_fit","Mopane_upper","Mopane_lower")
-
-Growth <- tidy(Growth)
-
-Growth <- cbind(Growth,dummyMAPDF)
-Growth <- cbind(Growth,Growth_Mopane)
-
-Growth_wide <- melt(Growth,measure.vars = c("fit","Mopane_fit"), id.vars = "MAP")
-Growth_ribbon <- melt(Growth,measure.vars = c("lwr","upr","Mopane_upper","Mopane_lower"), id.vars = "MAP")
-
-levels(Growth_wide$variable) <- c("Positive Growth Rate","Negative Growth Rate")
-
-fig_MainGrowthMAP <- ggplot()+
-  cleanTheme+
-  theme(plot.title = element_text(size = 12, hjust=0))+
-  ggtitle("A)")+
-  geom_line(data = Growth, aes(x = MAP, y = fit))+
-  geom_line(data = Growth, linetype="dashed", aes(x = MAP, y = upr))+
-  geom_line(data = Growth, linetype="dashed", aes(x = MAP, y = lwr))+
-  geom_point(data = MAP_growth, aes(x= MAP, y = Growth))+
-
-  #ylab(expression(Growth~Rate~(cm ~ yr^{-1})))+
-  #xlab(MAR_lab)+
-  xlab("")+
-  ylab("")+
-  ylim(30,100)+
-  xlim(250,1500)+
-  theme(legend.position="none",legend.direction="vertical")
-
-fig_MopaneGrowthMAP <- ggplot()+
-  cleanTheme+
-  theme(plot.title = element_text(size = 12, hjust=0))+
-  ggtitle("B)")+
-  xlab("")+
-  ylab("")+
-  ylim(30,100)+
-  xlim(250,1500)+
-  geom_line(data = Growth, aes(x = MAP, y = Mopane_fit))+
-  geom_line(data = Growth, linetype="dashed", aes(x = MAP, y = Mopane_upper))+
-  geom_line(data = Growth, linetype="dashed", aes(x = MAP, y = Mopane_lower))+
-  geom_point(data = COMO_growth, aes(x= MAP, y = Growth))
-  theme(legend.position="none",legend.direction="vertical")
-  
-GR_lab <- expression(paste("Growth Rate (cm ","yr",{}^{-1},")"))
-
-growthGrob <- arrangeGrob(fig_MainGrowthMAP,fig_MopaneGrowthMAP,nrow=1,left = textGrob(GR_lab, rot = 90, vjust = 1),sub = textGrob(MAR_lab, vjust = 0))
-
-growthGrob
-
-
-ggsave(plot = growthGrob, filename = "GR_fig.tiff",dpi = 100,width = 5,height = 3)
-```
-
-
-
-## Distribution of Heights by MAP
 
 ```{r}
 #glm_pEscape_null <- glm(data = na.omit(pEscape), pResult ~ 1, family = "binomial")
@@ -263,7 +183,7 @@ Fxn_pEscape_pred <- function(df){
   glm_pEscape_MAP <- glm(data = na.omit(df), pResult ~ MAP_Cuts, family = "quasibinomial")
 
   pEscape_pred <- predict.glm(object = glm_pEscape_MAP, type = "link", newdata = list(MAP_Cuts = dummyMAPDF$MAP),se.fit = TRUE)
-  pEscape_pred <- tidy(pEscape_pred)
+#  pEscape_pred <- tidy(pEscape_pred)
   pEscape_pred <- cbind(pEscape_pred,dummyMAPDF)
 
   pEscape_pred$upper.ci <- plogis(pEscape_pred$fit+(1.96 * (pEscape_pred$se.fit)))
@@ -274,23 +194,33 @@ Fxn_pEscape_pred <- function(df){
   return(pEscape_pred)
 }
 
-pEscape_pred_All <- Fxn_pEscape_pred(pEscape_All)
+pEscape_pred_PTEANG <- Fxn_pEscape_pred(pEscape_PTEANG)
+pEscape_pred_TERSER <- Fxn_pEscape_pred(pEscape_TERSER)
 pEscape_pred_GrowthFlat <- Fxn_pEscape_pred(df = pEscape_GrowthFlat)
 pEscape_pred_GrowthNegative <- Fxn_pEscape_pred(df = pEscape_GrowthNegative)
 pEscape_pred_GrowthPositive <- Fxn_pEscape_pred(df = pEscape_GrowthPositive)
 pEscape_pred_GrowthVaries <- Fxn_pEscape_pred(df = pEscape_GrowthVaries)
+pEscape_pred_GrowthVaries_COMO <- Fxn_pEscape_pred(df = pEscape_GrowthVaries_COMO)
+pEscape_pred_GrowthVaries_PTAN <- Fxn_pEscape_pred(df = pEscape_GrowthVaries_PTAN)
 pEscape_pred_IntensityVaries <- Fxn_pEscape_pred(df = pEscape_IntensityVaries)
 pEscape_pred_MFRIVaries <- Fxn_pEscape_pred(df = pEscape_MFRIVaries)
+pEscape_pred_Average <- Fxn_pEscape_pred(df = pEscape_Average)
+pEscape_pred_GrowthVaries_Average <- Fxn_pEscape_pred(df = pEscape_GrowthVaries_Average)
 
-pEscape_pred_All$Type <- "Standard Model"
+pEscape_pred_PTEANG$Type <- "Positive Growth: Pterocarpus angolensis"
+pEscape_pred_TERSER$Type <- "Positive Growth: Terminalia sericea"
 pEscape_pred_GrowthFlat$Type <- "Growth Flat with MAR"
-pEscape_pred_GrowthPositive$Type <- "Growth Positive with MAR"
-pEscape_pred_GrowthNegative$Type <- "Growth Negative with MAR"
-pEscape_pred_GrowthVaries$Type <- "Only Growth Varies with MAR"
-pEscape_pred_IntensityVaries$Type <- "Only Intensity Varies with MAR"
+pEscape_pred_GrowthPositive$Type <- "Growth Positive with MAP"
+pEscape_pred_GrowthNegative$Type <- "Growth Negative with MAP"
+pEscape_pred_GrowthVaries$Type <- "Only Growth Varies with MAP - TESE"
+pEscape_pred_GrowthVaries_PTAN$Type <- "Only Growth Varies with MAP - PTAN"
+pEscape_pred_GrowthVaries_COMO$Type <- "Only Growth Varies with MAP - COMO"
+pEscape_pred_IntensityVaries$Type <- "Only Intensity Varies with MAP"
 pEscape_pred_MFRIVaries$Type <- "Only MFRI Varies with MAR"
+pEscape_pred_Average$Type <- "Average Growth"
+pEscape_pred_GrowthVaries_Average$Type <- "Only Growtih Varies with MAP - Average"
 
-pEscape_pred <- rbind.data.frame(pEscape_pred_All,pEscape_pred_GrowthFlat,pEscape_pred_GrowthPositive,pEscape_pred_GrowthNegative,pEscape_pred_IntensityVaries,pEscape_pred_MFRIVaries,pEscape_pred_GrowthVaries)
+pEscape_pred <- rbind.data.frame(pEscape_pred_PTEANG,pEscape_pred_TERSER,pEscape_pred_GrowthFlat,pEscape_pred_GrowthPositive,pEscape_pred_GrowthNegative,pEscape_pred_IntensityVaries,pEscape_pred_MFRIVaries,pEscape_pred_GrowthVaries,pEscape_pred_GrowthVaries_PTAN,pEscape_pred_GrowthVaries_COMO,pEscape_pred_Average,pEscape_pred_GrowthVaries_Average)
 
 pEscape_pred$Type <- as.factor(pEscape_pred$Type)
 
@@ -301,35 +231,74 @@ pEscape_pred$Type <- as.factor(pEscape_pred$Type)
 ## Probability of Escape by MAP
 
 ```{r Fig_pEscape, echo=FALSE}
-GrowthNeg_pEscape <- subset(pEscape_pred,Type == "Growth Negative with MAR")
-GrowthFlat_pEscape <- subset(pEscape_pred, Type == "Growth Flat with MAR")
-GrowthPositive_pEscape <- subset(pEscape_pred, Type == "Growth Positive with MAR")
+GrowthNeg_pEscape <- subset(pEscape_pred,Type == "Growth Negative with MAP")
+GrowthFlat_pEscape <- subset(pEscape_pred, Type == "Growth Flat with MAP")
+GrowthPositive_Slow_pEscape <- subset(pEscape_pred, Type == "Positive Growth: Pterocarpus angolensis")
+GrowthPositive_Fast_pEscape <- subset(pEscape_pred, Type == "Positive Growth: Terminalia sericea")
 
-fig_GrowthPositive_pEscape <- ggplot(GrowthPositive_pEscape)+
+GrowthPositive_Slow_pEscape_rangeSubset <- GrowthPositive_Slow_pEscape[ which(GrowthPositive_Slow_pEscape$MAP >= min(extracted_by_trees_PTAN$layer,na.rm = TRUE) & GrowthPositive_Slow_pEscape$MAP <= max(extracted_by_trees_PTAN$layer,na.rm = TRUE)),]
+
+GrowthPositive_Fast_pEscape_rangeSubset <- GrowthPositive_Fast_pEscape[ which(GrowthPositive_Fast_pEscape$MAP >= min(extracted_by_trees_TESE$layer,na.rm = TRUE) & GrowthPositive_Fast_pEscape$MAP <= max(extracted_by_trees_TESE$layer,na.rm = TRUE)),]
+
+GrowthNeg_pEscape_rangeSubset <- GrowthNeg_pEscape[ which(GrowthNeg_pEscape$MAP >= min(extracted_by_trees_COMO$layer, na.rm=TRUE) & GrowthNeg_pEscape$MAP <= max(extracted_by_trees_COMO$layer, na.rm=TRUE)),]
+
+fig_GrowthPositive_Slow_pEscape <- ggplot(GrowthPositive_Slow_pEscape_rangeSubset)+
   cleanTheme+
   theme(plot.title = element_text(size = 12, hjust=0))+
-  geom_line(data = GrowthPositive_pEscape, size = 1.5, aes(x = MAP, y = fit))+
-  geom_line(linetype = "dashed", data = GrowthPositive_pEscape, aes(x = MAP, y = lower.ci))+
-  geom_line(linetype = "dashed", data = GrowthPositive_pEscape, aes(x = MAP, y = upper.ci))+
+  geom_line(data = GrowthPositive_Slow_pEscape_rangeSubset, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = GrowthPositive_Slow_pEscape_rangeSubset, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = GrowthPositive_Slow_pEscape_rangeSubset, aes(x = MAP, y = upper.ci))+
+ # ylab("p(Escape, 3 m sapling)")+
+  ylab("")+
+ #  ylim(0,1)+
+  xlim(400,850)+
+  #xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ggtitle("A) PTAN")
+
+fig_average_pEscape <- ggplot(pEscape_pred_Average)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = pEscape_pred_Average, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_pred_Average, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_pred_Average, aes(x = MAP, y = upper.ci))+
+ # ylab("p(Escape, 3 m sapling)")+
+  ylab("")+
+ #  ylim(0,1)+
+  xlim(400,850)+
+  #xlab("Mean Annual Precipitation (mm/yr)")+
+  xlab("\n")+
+  ggtitle("D) Average")
+
+
+
+fig_GrowthPositive_Fast_pEscape <- ggplot(GrowthPositive_Fast_pEscape_rangeSubset)+
+  cleanTheme+
+  theme(plot.title = element_text(size = 12, hjust=0))+
+  geom_line(data = GrowthPositive_Fast_pEscape_rangeSubset, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = GrowthPositive_Fast_pEscape_rangeSubset, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = GrowthPositive_Fast_pEscape_rangeSubset, aes(x = MAP, y = upper.ci))+
  # ylab("p(Escape, 3 m sapling)")+
   ylab("")+
    ylim(0,1)+
   #xlab("Mean Annual Precipitation (mm/yr)")+
+  xlim(400,850)+
   xlab("\n")+
-  ggtitle("A)")
+  ggtitle("B) TESE")
 
-fig_GrowthNeg_pEscape <- ggplot(GrowthNeg_pEscape)+
+fig_GrowthNeg_pEscape <- ggplot(GrowthNeg_pEscape_rangeSubset)+
   cleanTheme+
   ylim(0,1)+
   theme(plot.title = element_text(size = 12, hjust=0))+
-  geom_line(data = GrowthNeg_pEscape, size = 1.5, aes(x = MAP, y = fit))+
-  geom_line(linetype = "dashed", data = GrowthNeg_pEscape, aes(x = MAP, y = lower.ci))+
-  geom_line(linetype = "dashed", data = GrowthNeg_pEscape, aes(x = MAP, y = upper.ci))+
+  geom_line(data = GrowthNeg_pEscape_rangeSubset, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = GrowthNeg_pEscape_rangeSubset, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = GrowthNeg_pEscape_rangeSubset, aes(x = MAP, y = upper.ci))+
  # ylab("p(Escape, 3 m sapling)")+
   ylab("")+
  # xlab("\nMean Annual Precipitation (mm/yr)")+
   xlab("\n")+
-  ggtitle("B)")
+  xlim(400,850)+
+  ggtitle("C) COMO")
 
 fig_GrowthFlat_pEscape <- ggplot(GrowthFlat_pEscape)+
   cleanTheme+
@@ -342,14 +311,21 @@ fig_GrowthFlat_pEscape <- ggplot(GrowthFlat_pEscape)+
 #  xlab("Mean Annual Precipitation (mm/yr)")+
   xlab("\n")+
   ylab("")+
-  ggtitle("C)")
+  xlim(400,850)+
+  ggtitle("D) Growth is flat with MAR")
  
 
-pEscapeGrob <- arrangeGrob(fig_GrowthPositive_pEscape,fig_GrowthNeg_pEscape,fig_GrowthFlat_pEscape,nrow=1,left = textGrob("p(Escape, 3 m sapling)", rot = 90, vjust = 1),sub = textGrob(MAR_lab, vjust = 0))
+pEscapeGrob <- arrangeGrob(grobs = list(fig_GrowthPositive_Slow_pEscape,
+                           fig_GrowthPositive_Fast_pEscape,
+                           fig_GrowthNeg_pEscape,
+                           fig_average_pEscape),
+                           nrow=2,
+                           left = textGrob("p(Escape, 3 m sapling)", rot = 90, vjust = 1),
+                           bottom = textGrob(MAR_lab, vjust = 0))
 
-pEscapeGrob
+grid.arrange(pEscapeGrob)
 
-ggsave(plot = pEscapeGrob, filename = "pEscape_varied_growth.eps",dpi = 400,width = 10,height = 4)
+ggsave(plot = pEscapeGrob, filename = "pEscape_varied_growth.eps",dpi = 200,width = 8,height = 8)
 
 
 
@@ -358,38 +334,60 @@ ggsave(plot = pEscapeGrob, filename = "pEscape_varied_growth.eps",dpi = 400,widt
 ```{r Fig_pEscale_CompareMAR_Variation, echo=FALSE}
 #pEscape_pred_subVar <- subset(pEscape_pred, Type == "Standard Model" | Type == "Only MFRI Varies with MAR" | Type == "Only Intensity Varies with MAR" | Type == "Only Growth Varies with MAR")
 
-pEscape_Standard <- subset(pEscape_pred, Type == "Standard Model")
-pEscape_MFRIVaries <- subset(pEscape_pred, Type == "Only MFRI Varies with MAR")
-pEscape_IntensityVaries <- subset(pEscape_pred, Type == "Only Intensity Varies with MAR")
-pEscape_GrowthVaries <- subset(pEscape_pred, Type == "Only Growth Varies with MAR")
+#pEscape_Standard <- subset(pEscape_pred, Type == "Positive Growth: Terminalia sericea")
+pEscape_MFRIVaries <- subset(pEscape_pred, Type == "Only MFRI Varies with MAP")
+pEscape_IntensityVaries <- subset(pEscape_pred, Type == "Only Intensity Varies with MAP")
+pEscape_GrowthVaries <- subset(pEscape_pred, Type == "Only Growth Varies with MAR - TESE")
 
-fig_pEscape_Standard <- ggplot(pEscape_Standard)+
+fig_pEscape_Standard <- ggplot(GrowthPositive_Fast_pEscape_rangeSubset)+
   cleanTheme+
+  ylim(0,1)+
   theme(plot.title = element_text(size = 12, hjust=0))+
-  geom_line(data = pEscape_Standard, size = 1.5, aes(x = MAP, y = fit))+
-  geom_line(linetype = "dashed", data = pEscape_Standard, aes(x = MAP, y = lower.ci))+
-  geom_line(linetype = "dashed", data = pEscape_Standard, aes(x = MAP, y = upper.ci))+
-  #ylab("p(Escape, 3 m sapling)")+
-  #xlab("Mean Annual Precipitation (mm/yr)")+
+  
+  annotate(geom = "text",x = 500, y = 0.97, label = "TESE")+
+  geom_line(data = GrowthPositive_Fast_pEscape_rangeSubset, size = 1.5, color = "gray50", aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = GrowthPositive_Fast_pEscape_rangeSubset, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = GrowthPositive_Fast_pEscape_rangeSubset, aes(x = MAP, y = upper.ci))+
+  
+  
+annotate(geom = "text",x = 750, y = 0.68, label = "Average")+
+ geom_line(data = pEscape_pred_Average, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_pred_Average, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_pred_Average, aes(x = MAP, y = upper.ci))+
+  
+  annotate(geom = "text",x = 520, y = 0.35, label = "COMO")+
+  geom_line(data = GrowthPositive_Slow_pEscape_rangeSubset, size = 1.5, color = "gray25", aes(x = MAP, y = fit))+
+  #geom_line(linetype = "dashed", data = GrowthPositive_Slow_pEscape, aes(x = MAP, y = lower.ci))+
+  #geom_line(linetype = "dashed", data = GrowthPositive_Slow_pEscape, aes(x = MAP, y = upper.ci))+
+  
+  annotate(geom = "text",x = 650, y = 0.08, label = "PTAN")+
+  geom_line(data = GrowthNeg_pEscape_rangeSubset, size = 1.5, color = "gray75", linetype = "dotted", aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = GrowthNeg_pEscape_rangeSubset, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = GrowthNeg_pEscape_rangeSubset, aes(x = MAP, y = upper.ci))+
+  
   xlab("\n")+
   ylab("")+
-  ggtitle("A)")
+  xlim(400,850)+
+  ggtitle("A) Standard Models")
 
-fig_pEscape_MFRIVaries <- ggplot(pEscape_MFRIVaries)+
+fig_pEscape_MFRIVaries <- ggplot(pEscape_pred_MFRIVaries)+
   cleanTheme+
+  ylim(0,1)+
+  xlim(400,850)+
   theme(plot.title = element_text(size = 12, hjust=0))+
-  geom_line(data = pEscape_MFRIVaries, size = 1.5, aes(x = MAP, y = fit))+
-  geom_line(linetype = "dashed", data = pEscape_MFRIVaries, aes(x = MAP, y = lower.ci))+
-  geom_line(linetype = "dashed", data = pEscape_MFRIVaries, aes(x = MAP, y = upper.ci))+
+  geom_line(data = pEscape_pred_MFRIVaries, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_pred_MFRIVaries, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_pred_MFRIVaries, aes(x = MAP, y = upper.ci))+
  # ylab("p(Escape, 3 m sapling)")+
   ylab("")+
   xlab("\n")+
  # xlab("\nMean Annual Precipitation (mm/yr)")+
-  ggtitle("B)")
+  ggtitle("B) Only MFRI varies with MAP")
 
 fig_pEscape_IntensityVaries <- ggplot(pEscape_IntensityVaries)+
   cleanTheme+
-  ylim(0.5,1)+
+  ylim(0,1)+
+  xlim(400,850)+
   theme(plot.title = element_text(size = 12, hjust=0))+
   geom_line(data = pEscape_IntensityVaries, size = 1.5, aes(x = MAP, y = fit))+
   geom_line(linetype = "dashed", data = pEscape_IntensityVaries, aes(x = MAP, y = lower.ci))+
@@ -398,88 +396,160 @@ fig_pEscape_IntensityVaries <- ggplot(pEscape_IntensityVaries)+
 #  xlab("Mean Annual Precipitation (mm/yr)")+
   xlab("\n")+
   ylab("")+
-  ggtitle("C)")
+  ggtitle("C) Only Intensity varies with MAP")
 
-fig_pEscape_GrowthVaries <- ggplot(pEscape_IntensityVaries)+
+pEscape_GrowthVaries_rangeSubset <- pEscape_pred_GrowthVaries[which(pEscape_pred_GrowthVaries$MAP <= max(extracted_by_trees_TESE$layer, na.rm = TRUE) & pEscape_pred_GrowthVaries$MAP >= min(extracted_by_trees_TESE$layer, na.rm = TRUE)),]
+
+pEscape_GrowthVaries_COMO_rangeSubset <- pEscape_pred_GrowthVaries_COMO[which(pEscape_pred_GrowthVaries_COMO$MAP <= max(extracted_by_trees_COMO$layer, na.rm = TRUE) & pEscape_pred_GrowthVaries_COMO$MAP >= min(extracted_by_trees_COMO$layer, na.rm = TRUE)),]
+
+pEscape_pred_GrowthVaries_PTAN_rangeSubset <- pEscape_pred_GrowthVaries_PTAN[which(pEscape_pred_GrowthVaries_PTAN$MAP <= max(extracted_by_trees_PTAN$layer, na.rm=TRUE) & pEscape_pred_GrowthVaries_PTAN$MAP >= min(extracted_by_trees_PTAN$layer, na.rm=TRUE)),]
+
+fig_pEscape_GrowthVaries <- ggplot()+
   cleanTheme+
-  ylim(0.5,1)+
+  ylim(0,1)+
+  xlim(400,850)+
   theme(plot.title = element_text(size = 12, hjust=0))+
-  geom_line(data = pEscape_GrowthVaries, size = 1.5, aes(x = MAP, y = fit))+
-  geom_line(linetype = "dashed", data = pEscape_GrowthVaries, aes(x = MAP, y = lower.ci))+
-  geom_line(linetype = "dashed", data = pEscape_GrowthVaries, aes(x = MAP, y = upper.ci))+
+  ggtitle("D) Only Growth varies with MAP")+
+  annotate(geom = "text",x = 500, y = 0.97, label = "TESE")+
+  geom_line(data = pEscape_GrowthVaries_rangeSubset, size = 1.5, color = "gray50", aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_GrowthVaries_rangeSubset, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_GrowthVaries_rangeSubset, aes(x = MAP, y = upper.ci))+
+  
+  annotate(geom = "text",x = 520, y = .30, label = "COMO")+
+  geom_line(data = pEscape_GrowthVaries_COMO_rangeSubset, size = 1.5, color = "gray75", linetype = "dotted", aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_GrowthVaries_COMO_rangeSubset, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_GrowthVaries_COMO_rangeSubset, aes(x = MAP, y = upper.ci))+
+  
+  
+annotate(geom = "text",x = 750, y = 0.68, label = "Average")+
+geom_line(data = pEscape_pred_GrowthVaries_Average, size = 1.5, aes(x = MAP, y = fit))+
+  geom_line(linetype = "dashed", data = pEscape_pred_GrowthVaries_Average, aes(x = MAP, y = lower.ci))+
+  geom_line(linetype = "dashed", data = pEscape_pred_GrowthVaries_Average, aes(x = MAP, y = upper.ci))+
+ 
+  
+   annotate(geom = "text",x = 620, y = 0.06, label = "PTAN")+
+   geom_line(data = pEscape_pred_GrowthVaries_PTAN_rangeSubset, size = 1.5, color = "gray25", aes(x = MAP, y = fit))+
+#  geom_line(linetype = "dashed", data = pEscape_pred_GrowthVaries_PTAN, aes(x = MAP, y = lower.ci))+
+ # geom_line(linetype = "dashed", data = pEscape_pred_GrowthVaries_PTAN, aes(x = MAP, y = upper.ci))+
 #  ylab("p(Escape, 3 m sapling)")+
 #  xlab("Mean Annual Precipitation (mm/yr)")+
   xlab("\n")+
-  ylab("")+
-  ggtitle("D)")
+  ylab("")
  
 
-compareGrowth <- arrangeGrob(fig_pEscape_Standard,fig_pEscape_MFRIVaries,fig_pEscape_IntensityVaries,fig_pEscape_GrowthVaries,nrow=2,ncol=2,left = textGrob("p(Escape, 3 m sapling)", rot = 90, vjust = 1),sub = textGrob(MAR_lab, vjust = 0))
+compareGrowth <- arrangeGrob(fig_pEscape_Standard,fig_pEscape_MFRIVaries,fig_pEscape_IntensityVaries,fig_pEscape_GrowthVaries,nrow=2,ncol=2,left = textGrob("p(Escape, 3 m sapling)", rot = 90, vjust = 1),bottom = textGrob(MAR_lab, vjust = 0))
 
-compareGrowth
+grid.arrange(compareGrowth)
 
-ggsave(plot = compareGrowth, filename = "compareGrowth.eps",dpi = 200,width = 6,height = 6)
+ggsave(plot = compareGrowth, filename = "compareGrowth.eps",dpi = 200,width = 8,height = 8)
 ```
 
 ```{r whatControlsWhat_dataPrep}
 pEscape_melt <- melt(pEscape_pred,id.vars = c("Type","MAP"),measure.vars = "fit")
 pEscape_wide <- dcast(pEscape_melt,MAP ~ Type,value.var = "value")
 
-names(pEscape_wide) <- c("MAP","GrowthFlat","GrowthNegative","GrowthPositive","GrowthVaries","IntensityFlat","MFRIFlat","Standard")
-```
+# This is probably wrong below. CHECK
 
-```{r Fig_varianceOfModel,echo=FALSE}
-fig_GrowthFlat <- ggplot(pEscape_wide)+
-  ylim(.85,1)+
-  xlim(.85,1)+
-  geom_line(colour="gray50",aes(x = Standard, y = Standard))+
-  geom_line(linetype = "dashed", aes(x = GrowthVaries, y = Standard))+
-  xlab("Probability of Escape Predictions:\nOnly Growth Varies with MAR")+
-  ylab("Standard Probability of Escape Predictions")+
-  cleanTheme
-
-fig_MFRIFlat <- ggplot(pEscape_wide)+
-  ylim(.85,1)+
-  xlim(.85,1)+
-  geom_line(colour="gray50",aes(x = Standard, y = Standard))+
-  geom_line(linetype = "dashed", aes(x = MFRIFlat, y = Standard))+
-  xlab("Probability of Escape Predictions:\nOnly MFRI Varies with MAR")+
-  ylab("Standard Probability of Escape Predictions")+
-  cleanTheme
-
-fig_IntensityFlat <- ggplot(pEscape_wide)+
-  xlim(.85,1)+
-  ylim(.85,1)+
-  geom_line(colour="gray50",aes(x = Standard, y = Standard))+
-  geom_line(linetype = "dashed", aes(x = IntensityFlat, y = Standard))+
-  xlab("Probability of Escape Predictions:\nOnly Intensity Varies with MAR")+
-  ylab("Standard Probability of Escape Predictions")+
-  cleanTheme
-
-figGrowthCompare <- arrangeGrob(fig_GrowthFlat,fig_MFRIFlat,fig_IntensityFlat,nrow=1)
-
-figGrowthCompare
-
-ggsave(plot = figGrowthCompare, filename = "sensitivity.tiff",dpi = 100,width = 11,height = 4)
-
+names(pEscape_wide) <- c("MAP",
+                         "AverageGrowth",
+                         "GrowthFlat",
+                         "GrowthNegative",
+                         "GrowthPositive",
+                         "GrowthVaries_COMO",
+                         "GrowthVaries_PTAN",
+                         "GrowthVaries_TESE",
+                         "Average_GrowthVaries",
+                         "IntensityVaries",
+                         "MFRIVaries",
+                         "PositiveGrowth_PTAN",
+                         "PositiveGrowth_TESE")
 ```
 
 ```{r whatControlsWhat_Models}
-lm_growthVaries <- lm(Standard~GrowthVaries,pEscape_wide)
-lm_MFRIFlat <- lm(Standard~MFRIFlat,pEscape_wide)
-lm_intensityFlat <- lm(Standard~IntensityFlat,pEscape_wide)
+lm_TESE_growthVaries <- lm(PositiveGrowth_TESE~GrowthVaries_TESE,pEscape_wide)
+lm_TESE_MFRIFlat <- lm(PositiveGrowth_TESE~MFRIVaries,pEscape_wide)
+lm_TESE_intensityFlat <- lm(PositiveGrowth_TESE~IntensityVaries,pEscape_wide)
 
-growthVariesDF <- glance(lm_growthVaries)
-growthVariesDF$Model <- "Standard ~ Growth Varies"
+lm_COMO_growthVaries <- lm(GrowthNegative~GrowthVaries_COMO,pEscape_wide)
+lm_COMO_MFRIFlat <- lm(GrowthNegative~MFRIVaries,pEscape_wide)
+lm_COMO_intensityFlat <- lm(GrowthNegative~IntensityVaries,pEscape_wide)
 
-MFRIVariesDF <- glance(lm_MFRIFlat)
-MFRIVariesDF$Model <- "Standard ~ MFRI Varies"
+lm_PTAN_growthVaries <- lm(PositiveGrowth_PTAN~GrowthVaries_PTAN,pEscape_wide)
+lm_PTAN_MFRIFlat <- lm(PositiveGrowth_PTAN~MFRIVaries,pEscape_wide)
+lm_PTAN_intensityFlat <- lm(PositiveGrowth_PTAN~IntensityVaries,pEscape_wide)
 
-intensityVariesDF <- glance(lm_intensityFlat)
-intensityVariesDF$Model <- "Standard ~ Intensity Varies"
+lm_average_growthVaries <- lm(AverageGrowth~Average_GrowthVaries,pEscape_wide)
+lm_Average_MFRIFlat <- lm(AverageGrowth~MFRIVaries,pEscape_wide)
+lm_Average_intensityFlat <- lm(AverageGrowth~IntensityVaries,pEscape_wide)
 
-modelCompareDF <- rbind(growthVariesDF,MFRIVariesDF,intensityVariesDF)
+TESE_growthVariesDF <- glance(lm_TESE_growthVaries)
+TESE_growthVariesDF$Model <- "PositiveGrowth_TESE ~ Growth Varies"
+TESE_growthVariesDF$Category <- "TESE"
+
+TESE_MFRIVariesDF <- glance(lm_TESE_MFRIFlat)
+TESE_MFRIVariesDF$Model <- "PositiveGrowth_TESE ~ MFRI Varies"
+TESE_MFRIVariesDF$Category <- "TESE"
+
+TESE_intensityVariesDF <- glance(lm_TESE_intensityFlat)
+TESE_intensityVariesDF$Model <- "PositiveGrowth_TESE ~ Intensity Varies"
+TESE_intensityVariesDF$Category <- "TESE"
+
+COMO_growthVariesDF <- glance(lm_COMO_growthVaries)
+COMO_growthVariesDF$Model <- "COMO ~ Growth Varies"
+COMO_growthVariesDF$Category <- "COMO"
+
+
+COMO_MFRIVariesDF <- glance(lm_COMO_MFRIFlat)
+COMO_MFRIVariesDF$Model <- "COMO ~ MFRI Varies"
+COMO_MFRIVariesDF$Category <- "COMO"
+
+COMO_intensityVariesDF <- glance(lm_COMO_intensityFlat)
+COMO_intensityVariesDF$Model <- "COMO ~ Intensity Varies"
+COMO_intensityVariesDF$Category <- "COMO"
+
+#PTAN_growthVariesDF <- glance(lm_PTAN_growthVaries)
+#PTAN_growthVariesDF$Model <- "PTAN ~ Growth Varies"
+#PTAN_growthVariesDF$Category <- "PTAN"
+
+PTAN_MFRIVariesDF <- glance(lm_PTAN_MFRIFlat)
+PTAN_MFRIVariesDF$Model <- "PTAN ~ MFRI Varies"
+PTAN_MFRIVariesDF$Category <- "PTAN"
+
+PTAN_intensityVariesDF <- glance(lm_PTAN_intensityFlat)
+PTAN_intensityVariesDF$Model <- "PTAN ~ Intensity Varies"
+PTAN_intensityVariesDF$Category <- "PTAN"
+
+
+
+lm_Average_MFRIFlatDF <- glance(lm_Average_MFRIFlat)
+lm_Average_MFRIFlatDF$Model <- "Average ~ MFRI Flat"
+lm_Average_MFRIFlatDF$Category <- "Average"
+
+lm_average_growthVariesDF <- glance(lm_average_growthVaries)
+lm_average_growthVariesDF$Model <- "Average ~ Average Growth Varies"
+lm_average_growthVariesDF$Category <- "Average"
+
+lm_Average_intensityFlatDF <- glance(lm_Average_intensityFlat)
+lm_Average_intensityFlatDF$Model <- "Average ~ Intensity Flat"
+lm_Average_intensityFlatDF$Category <- "Average"
+
+modelCompareDF <- rbind(TESE_growthVariesDF,
+                        TESE_MFRIVariesDF,
+                        TESE_intensityVariesDF,
+                        COMO_growthVariesDF,
+                        COMO_MFRIVariesDF,
+                        COMO_intensityVariesDF,
+                        PTAN_MFRIVariesDF,
+                        PTAN_intensityVariesDF,
+                        lm_Average_MFRIFlatDF,
+                        lm_average_growthVariesDF,
+                        lm_Average_intensityFlatDF)
+
+sorted <- modelCompareDF[order(modelCompareDF$Category,-modelCompareDF$r.squared),]
+
+write.csv(sorted, file="modelCompare.csv")
 
 
 
 
+```
